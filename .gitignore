@@ -1,6 +1,6 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
+**pycache**/
+*.py[cod]
 *$py.class
 
 # C extensions
@@ -59,6 +59,8 @@ cover/
 *.log
 local_settings.py
 db.sqlite3
+staticfiles/
+.DS_Store
 db.sqlite3-journal
 
 # Flask stuff:
@@ -150,7 +152,7 @@ activemq-data/
 # Environments
 .env
 .envrc
-.venv
+.venv/
 env/
 venv/
 ENV/
