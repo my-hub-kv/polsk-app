@@ -74,22 +74,29 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-database_url = os.getenv("DATABASE_URL")
+USE_SQLITE = os.getenv("USE_SQLITE", "False").lower() == "true"
 
-if database_url:
+if USE_SQLITE:
+    if not DEBUG:
+        raise RuntimeError("USE_SQLITE is only allowed when DJANGO_DEBUG is true")
+
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL is required unless USE_SQLITE is true")
+
     DATABASES = {
         "default": dj_database_url.parse(
             database_url,
             conn_max_age=60,
             conn_health_checks=True,
         )
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
     }
 
 
