@@ -1,0 +1,40 @@
+name: Technical task
+description: Propose bounded engineering work
+title: "Technical: "
+labels: [technical]
+body:
+  - type: textarea
+    id: goal
+    attributes: {label: Goal}
+    validations: {required: true}
+  - type: textarea
+    id: motivation
+    attributes: {label: Motivation}
+  - type: textarea
+    id: scope
+    attributes: {label: Scope}
+    validations: {required: true}
+  - type: textarea
+    id: approach
+    attributes: {label: Proposed approach}
+  - type: textarea
+    id: alternatives
+    attributes: {label: Alternatives}
+  - type: textarea
+    id: risks
+    attributes: {label: Risks}
+  - type: textarea
+    id: migration
+    attributes: {label: Migration impact}
+  - type: textarea
+    id: security
+    attributes: {label: Security impact}
+  - type: textarea
+    id: tests
+    attributes: {label: Tests}
+  - type: textarea
+    id: documentation
+    attributes: {label: Documentation}
+  - type: textarea
+    id: rollback
+    attributes: {label: Rollback}

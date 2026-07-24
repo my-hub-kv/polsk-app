@@ -1,0 +1,46 @@
+name: Feature
+description: Propose a bounded product capability
+title: "Feature: "
+labels: [feature]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include secrets or real participant information."
+  - type: textarea
+    id: problem
+    attributes: {label: Problem, description: What problem is being solved?}
+    validations: {required: true}
+  - type: input
+    id: user
+    attributes: {label: User}
+    validations: {required: true}
+  - type: textarea
+    id: outcome
+    attributes: {label: Desired outcome}
+    validations: {required: true}
+  - type: textarea
+    id: story
+    attributes: {label: Relevant product story}
+  - type: textarea
+    id: acceptance
+    attributes: {label: Acceptance criteria}
+    validations: {required: true}
+  - type: textarea
+    id: authorization
+    attributes: {label: Authorization requirements}
+    validations: {required: true}
+  - type: textarea
+    id: ui
+    attributes: {label: UI states}
+  - type: textarea
+    id: data
+    attributes: {label: Data and migration impact}
+  - type: textarea
+    id: security
+    attributes: {label: Security and privacy impact}
+  - type: textarea
+    id: out_of_scope
+    attributes: {label: Out of scope}
+  - type: textarea
+    id: documentation
+    attributes: {label: Documentation and additional context}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement User Story"
+  short_description: "Deliver approved features safely"
+  default_prompt: "Use $implement-user-story to implement this approved feature."

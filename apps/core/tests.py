@@ -1,7 +1,7 @@
 import os
 from unittest.mock import patch
 
-from django.test import SimpleTestCase
+from django.test import Client, SimpleTestCase
 from django.urls import reverse
 
 
@@ -32,6 +32,23 @@ class DatabaseKeepaliveTests(SimpleTestCase):
 
     @patch.dict(os.environ, {"KEEPALIVE_SECRET": "test-secret"})
     @patch("apps.core.views.connection")
+    def test_bearer_authenticated_request_is_not_rejected_by_csrf_middleware(
+        self, mock_connection
+    ):
+        csrf_enforcing_client = Client(enforce_csrf_checks=True)
+
+        response = csrf_enforcing_client.post(
+            self.url,
+            secure=True,
+            HTTP_AUTHORIZATION="Bearer test-secret",
+            HTTP_HOST="localhost",
+        )
+
+        mock_connection.cursor.assert_called_once_with()
+        self.assertEqual(response.status_code, 200)
+
+    @patch.dict(os.environ, {"KEEPALIVE_SECRET": "test-secret"})
+    @patch("apps.core.views.connection")
     def test_authorized_request_queries_the_database(self, mock_connection):
         response = self.client.post(
             self.url,
@@ -50,7 +67,9 @@ class DatabaseKeepaliveTests(SimpleTestCase):
     @patch.dict(os.environ, {"KEEPALIVE_SECRET": "test-secret"})
     @patch("apps.core.views.connection")
     def test_rejects_an_invalid_secret(self, mock_connection):
-        response = self.client.post(
+        csrf_enforcing_client = Client(enforce_csrf_checks=True)
+
+        response = csrf_enforcing_client.post(
             self.url,
             secure=True,
             HTTP_AUTHORIZATION="Bearer incorrect-secret",

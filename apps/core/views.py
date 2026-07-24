@@ -3,6 +3,7 @@ import os
 
 from django.db import connection
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 def home(request: HttpRequest) -> HttpResponse:
@@ -42,6 +43,7 @@ def health(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"status": "ok"})
 
 
+@csrf_exempt
 def database_keepalive(request: HttpRequest) -> JsonResponse:
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
