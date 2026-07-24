@@ -8,7 +8,7 @@ As a coordinator, I want to configure attendance, workload, preferences, availab
 
 ### Acceptance criteria
 
-Drafts show validation problems, remain hidden from participants, preserve sticky assignments, and publish only after human review. Day responsibility is derived.
+Drafts show validation problems, remain hidden from participants, preserve sticky assignments, and publish only after human review. Once staffing minima are met, the planner may add eligible participants to improve fairness without exceeding an optional maximum. Day responsibility is derived.
 
 ### Authorization
 
@@ -41,3 +41,23 @@ Event-year isolation applies to every list and detail view.
 ### Out of scope
 
 Household-level assignment.
+
+## CHR-03: Suggest or create a chore
+
+As a participant, I want to create a draft chore, so that I can suggest work that should be planned without publishing an assignment myself.
+
+### Acceptance criteria
+
+Any participant can create a draft chore for the current event year. Creating it does not publish assignments or notify participants.
+
+### Authorization
+
+Participants may create drafts; authorised coordinators decide whether to edit, schedule, configure, or include a draft in a published plan.
+
+### Important edge cases
+
+The draft is event-year scoped and does not expose unpublished planning data to normal participants.
+
+### Out of scope
+
+Participant-led publication or direct assignment of other participants.

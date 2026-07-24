@@ -28,9 +28,17 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 CSRF_TRUSTED_ORIGINS: list[str] = []
 
-if render_hostname := os.getenv("RENDER_EXTERNAL_HOSTNAME"):
-    ALLOWED_HOSTS.append(render_hostname)
-    CSRF_TRUSTED_ORIGINS.append(f"https://{render_hostname}")
+# The fallback preserves the existing deployment until its generic settings are set.
+app_host = os.getenv("APP_HOST") or os.getenv("RENDER_EXTERNAL_HOSTNAME")
+app_origin = os.getenv("APP_ORIGIN")
+
+if app_host:
+    ALLOWED_HOSTS.append(app_host)
+
+if app_origin:
+    CSRF_TRUSTED_ORIGINS.append(app_origin)
+elif app_host:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{app_host}")
 
 
 INSTALLED_APPS = [

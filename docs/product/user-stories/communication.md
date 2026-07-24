@@ -8,7 +8,7 @@ As a participant, I want to create/discover public channels and subscribe or uns
 
 ### Acceptance criteria
 
-Administrators create official and private channels; official channels cannot be muted; private non-members cannot access or discover a channel; no acknowledgement is required.
+Administrators create official and private channels; every active event year has at least one official all-participants channel; official channels cannot be muted; private non-members cannot access or discover a channel; no acknowledgement is required.
 
 ### Authorization
 

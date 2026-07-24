@@ -7,7 +7,7 @@ Event-year roles are additive and may change between years. The matrix is a star
 | Capability | Participant / teen | Coordinator | Organizer | Administrator | Child profile |
 | --- | --- | --- | --- | --- | --- |
 | View directory, phones, dietary data | Yes | Yes | Yes | Yes | Via acting adult |
-| Create activity / public channel / shopping request | Yes | Yes | Yes | Yes | No independent login |
+| Create activity, draft chore, public channel, or shopping request | Yes | Yes | Yes | Yes | No independent login |
 | Edit own activity or message | Yes | Yes | Yes | Yes | Via acting adult |
 | Plan/publish chores | No | Chore coordinator | Yes | Yes | No |
 | Create official/private channels | No | No | Yes | Yes | No |

@@ -15,3 +15,4 @@ Codex must not decide these matters silently. Resolve each through an issue, an 
 11. Sparse-stock usage estimation.
 12. Private backup, restoration, and operational runbooks.
 13. Default behaviour for optional task maximums.
+14. Whether the dinner `BA` role must always be held by an adult.

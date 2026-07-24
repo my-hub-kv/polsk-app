@@ -25,7 +25,7 @@ Read [docs/index.md](docs/index.md) before product work. Use this precedence: di
 ## Security and product safety
 
 - Treat committed files as public. Never commit, print, log, or expose secrets, real participant data, hosted-database details, account IDs, dashboard links, production URLs, or recovery procedures.
-- Never access hosted development or production databases without explicit authorization. Use synthetic fixtures, examples, and screenshots.
+- Never access a hosted production database or shared hosted development database. Codex uses only isolated local or disposable test databases containing synthetic data; authorised humans perform shared-environment database operations outside Codex.
 - Enforce authorization on the server. Scope every event-owned object to its event year and prevent IDOR; hidden UI is never authorization.
 - Do not weaken authentication, CSRF, secure cookies, HTTPS, or production failure handling. Do not expose secrets to untrusted pull-request workflows.
 - Participant profiles and login credentials are separate. An adult may act as a child only within the same household; record both acting account and active participant for auditable actions.
