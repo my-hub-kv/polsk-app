@@ -28,7 +28,7 @@ As a participant, I want to submit a request, and as a coordinator I want to edi
 
 ### Acceptance criteria
 
-Coordinators may add or dismiss requests, edit text, quantity, and unit, and merge duplicates. Suggestions show reasons, remain editable, use delivery days or delivery periods, export CSV safely, retain export history, warn on later changes, and support operational list status. Baseline exports include product name, optional vendor product number, quantity, unit, delivery date, category, purpose, reservation label, handling note, and general comment.
+Coordinators may add or dismiss requests, edit text, quantity, and unit, and merge duplicates. Suggestions show reasons, remain editable, use delivery days or delivery periods, and may consider approximate verified or estimated stock movement over earlier current-event days when observations are available. They export CSV safely, retain export history, warn on later changes, and support operational list status. Baseline exports include product name, optional vendor product number, quantity, unit, delivery date, category, purpose, reservation label, handling note, and general comment.
 
 ### Authorization
 
