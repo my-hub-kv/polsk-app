@@ -1,0 +1,4 @@
+interface:
+  display_name: "Polsk Security Review"
+  short_description: "Review access and data protection"
+  default_prompt: "Use $polsk-security-review to review this change before handoff."

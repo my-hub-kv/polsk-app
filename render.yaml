@@ -23,3 +23,7 @@ services:
         sync: false
       - key: KEEPALIVE_SECRET
         sync: false
+      - key: APP_HOST
+        sync: false
+      - key: APP_ORIGIN
+        sync: false

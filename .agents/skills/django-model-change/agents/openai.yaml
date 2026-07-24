@@ -1,0 +1,4 @@
+interface:
+  display_name: "Django Model Change"
+  short_description: "Plan safe Django data changes"
+  default_prompt: "Use $django-model-change to plan and implement this data change."

@@ -1,0 +1,3 @@
+# First-version non-goals
+
+Polsk App does not support unrelated organisations, multi-tenancy, Polish localisation or branding, a native mobile codebase, SPA, public registration, social login, required phone numbers, exact birth dates, household-level chore assignment, chore completion/proof/approval, read acknowledgements, direct messages, external calendar synchronisation, detailed consumption or meal/portion planning, automatic ordering, vendor API integration, budget/receipt/barcode handling, shopper/store assignment, machine-learning planning, WebSocket requirements, microservices, or Docker in the current baseline.
