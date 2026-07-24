@@ -2,6 +2,29 @@ import os
 from unittest.mock import patch
 
 from django.test import SimpleTestCase
+from django.urls import reverse
+
+
+class CoreViewsTests(SimpleTestCase):
+    def test_home_page(self):
+        response = self.client.get(
+            reverse("core:home"),
+            secure=True,
+            HTTP_HOST="localhost",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Polsk App")
+
+    def test_health_endpoint(self):
+        response = self.client.get(
+            reverse("core:health"),
+            secure=True,
+            HTTP_HOST="localhost",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
 
 
 class DatabaseKeepaliveTests(SimpleTestCase):
@@ -12,6 +35,7 @@ class DatabaseKeepaliveTests(SimpleTestCase):
     def test_authorized_request_queries_the_database(self, mock_connection):
         response = self.client.post(
             self.url,
+            secure=True,
             HTTP_AUTHORIZATION="Bearer test-secret",
             HTTP_HOST="localhost",
         )
@@ -28,6 +52,7 @@ class DatabaseKeepaliveTests(SimpleTestCase):
     def test_rejects_an_invalid_secret(self, mock_connection):
         response = self.client.post(
             self.url,
+            secure=True,
             HTTP_AUTHORIZATION="Bearer incorrect-secret",
             HTTP_HOST="localhost",
         )
@@ -37,6 +62,10 @@ class DatabaseKeepaliveTests(SimpleTestCase):
 
     @patch.dict(os.environ, {"KEEPALIVE_SECRET": ""})
     def test_returns_service_unavailable_when_not_configured(self):
-        response = self.client.post(self.url, HTTP_HOST="localhost")
+        response = self.client.post(
+            self.url,
+            secure=True,
+            HTTP_HOST="localhost",
+        )
 
         self.assertEqual(response.status_code, 503)
