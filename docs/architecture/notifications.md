@@ -1,5 +1,7 @@
 # Notifications
 
+**Architecture status: Candidate design. Implementation: Planned.**
+
 ```text
 Domain transaction -> durable notification/outbox record -> delivery dispatcher
     -> in-app delivery -> push adapter -> email adapter

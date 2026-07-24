@@ -1,5 +1,7 @@
 # Chore planning
 
+**Product rules: Confirmed. Planner and persistence design: Candidate. Implementation: Planned.**
+
 Every chore has exactly one `A` task-responsible person; `X` is an ordinary adult, `B` a child, and `BA` a dinner-only child-food responsible. Dinner `A` and `BA` differ. A chore occurrence belongs to an event year and has date, exact/approximate time, type, description, minimum total/adult/child counts, optional maximum, optional `BA`, and a draft plan version.
 
 Planning inputs include daily presence/availability, global and daily chore enablement, workload percentage, age group, `A`/`BA` eligibility, preferences/avoids, household, keep-together preference, sticky assignments, and locked assignments.

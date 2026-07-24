@@ -1,6 +1,6 @@
 # Agenda and calendar user stories
 
-Status: Confirmed
+Product status: Confirmed. Implementation status: Planned.
 
 ## AGN-01: Use the agenda
 

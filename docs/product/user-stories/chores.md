@@ -1,6 +1,6 @@
 # Chores user stories
 
-Status: Confirmed
+Product status: Confirmed. Implementation status: Planned.
 
 ## CHR-01: Plan and publish chores
 

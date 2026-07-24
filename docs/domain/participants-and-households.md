@@ -1,5 +1,7 @@
 # Participants and households
 
+**Product rules: Confirmed. Domain design: Candidate. Implementation: Planned.**
+
 Authentication account, participant profile, event participation, household, household membership, event-year role, active participant, and acting authenticated user are distinct concepts. A session stores active participant separately from the authenticated adult.
 
 Profile switching is: authenticate an adult; choose a same-household child; store active participant; scope participant-facing queries to it; record acting account and active participant for auditable mutations; reject cross-household switching. Exceptional administrator access must be explicit and audited.

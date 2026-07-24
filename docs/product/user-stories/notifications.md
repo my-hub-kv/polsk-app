@@ -1,6 +1,6 @@
 # Notifications user stories
 
-Status: Confirmed
+Product status: Confirmed. Implementation status: Planned.
 
 ## NTF-01: Receive relevant notification
 

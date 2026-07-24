@@ -1,5 +1,7 @@
 # Conceptual data model
 
+**Status: Candidate design. Implementation: Planned.**
+
 This is non-binding; final fields and relationships require a feature specification and migration review.
 
 - **Accounts/people:** User/LoginAccount, Participant, Household, HouseholdMembership, EventParticipation, EventRole, Invitation, active-profile session context.

@@ -1,6 +1,8 @@
 # Roles and permissions
 
-Event-year roles are additive and may change between years. This is the starting policy; every permission must be enforced server-side.
+**Role list: Confirmed. Permission matrix: Candidate policy. Implementation status: Planned.**
+
+Event-year roles are additive and may change between years. The matrix is a starting policy, not an implementation authority for an unresolved edge case; every eventual permission must be enforced server-side.
 
 | Capability | Participant / teen | Coordinator | Organizer | Administrator | Child profile |
 | --- | --- | --- | --- | --- | --- |

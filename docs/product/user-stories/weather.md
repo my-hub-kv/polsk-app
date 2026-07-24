@@ -1,6 +1,6 @@
 # Weather user stories
 
-Status: Confirmed
+Product status: Confirmed. Implementation status: Planned.
 
 ## WTH-01: Use weather context
 

@@ -1,6 +1,6 @@
 # Administration user stories
 
-Status: Confirmed
+Product status: Confirmed. Implementation status: Planned.
 
 ## ADM-01: Manage an event year
 

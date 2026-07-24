@@ -1,6 +1,6 @@
 # Accounts and households user stories
 
-Status: Confirmed
+Product status: Confirmed. Implementation status: Planned.
 
 ## ACC-01: Join and manage credentials
 

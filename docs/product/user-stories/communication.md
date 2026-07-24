@@ -1,6 +1,6 @@
 # Communication user stories
 
-Status: Confirmed
+Product status: Confirmed. Implementation status: Planned.
 
 ## MSG-01: Use channels
 

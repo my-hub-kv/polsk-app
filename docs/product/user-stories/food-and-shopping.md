@@ -1,6 +1,6 @@
 # Food and shopping user stories
 
-Status: Confirmed
+Product status: Confirmed. Implementation status: Planned.
 
 ## FOD-01: Understand food availability
 
