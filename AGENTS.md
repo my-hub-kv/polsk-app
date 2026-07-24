@@ -43,6 +43,8 @@ Read [docs/index.md](docs/index.md) before product work. Use this precedence: di
 
 Create schema migrations with `python manage.py makemigrations`; never hand-write schema migration files. Never modify an existing data migration after it has been created or applied—add a new, reviewed migration instead. Use repository scripts when present, plus `python manage.py makemigrations --check --dry-run` and `git diff --check`. Test successful and denied authorization, event-year isolation, profile switching, deletion, constraints, CSV safety, date boundaries, and mocked provider adapters as relevant. CI PostgreSQL 17 is authoritative.
 
+Follow `docs/development/coding-standards.md` and `docs/development/commenting-and-code-documentation.md` for Python, Django, comments, and docstrings.
+
 Documentation status is deliberate: **Confirmed** means product behaviour is approved; **Candidate** means it is a proposal and must not be implemented as settled behaviour; **Planned** means approved behaviour has no implementation yet; **Implemented** means tests and code enforce it. Never promote a Candidate merely because it is convenient to build.
 
 ## Review focus

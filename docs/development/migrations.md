@@ -8,6 +8,8 @@ Never modify an existing data migration after it has been created or applied. If
 
 Schema migrations define tables, fields, indexes, and constraints. Data migrations transform existing rows. Keep them separate whenever that makes deployment, rollback, or review safer. A data migration must use Django’s historical models through `apps.get_model()`, be safe to retry where practical, and avoid importing current model code.
 
+Migration dependencies and operations—not a filename's numeric prefix—define execution order. Put generated schema/model-state changes and any hand-written data transformation in separate migration files where that makes the sequence clearer.
+
 For risky changes, prefer **expand → migrate/backfill → enforce → contract**:
 
 1. Add a backwards-compatible field, table, or index.
@@ -21,4 +23,4 @@ Assess nullability, defaults, `on_delete`, uniqueness/check constraints, indexes
 
 Use nullable historical references or explicit anonymisation when shared history must survive participant deletion. Destructive or irreversible work requires explicit human approval and a recovery plan. Never access a hosted database from Codex.
 
-The repository already has initial Django migrations. Introducing or changing the authentication model after real identity data exists is a deliberate migration project, not a routine refactor.
+Before building invitations, credentials, or account-linked participant features, record whether Django’s default user model is sufficient or a custom user model is required. If a custom user model is needed, introduce it before real identity data and dependent application migrations exist. The repository already has initial Django migrations, so changing the authentication model later is a deliberate migration project, not a routine refactor.

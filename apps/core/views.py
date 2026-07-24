@@ -43,6 +43,9 @@ def health(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"status": "ok"})
 
 
+# This non-browser endpoint authenticates with a bearer secret, not a session cookie.
+# CSRF protection therefore cannot validate its scheduled request; bearer authentication
+# remains mandatory for every request.
 @csrf_exempt
 def database_keepalive(request: HttpRequest) -> JsonResponse:
     if request.method != "POST":
