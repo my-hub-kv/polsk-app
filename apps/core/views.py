@@ -1,3 +1,7 @@
+import hmac
+import os
+
+from django.db import connection
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
 
@@ -36,3 +40,25 @@ def home(request: HttpRequest) -> HttpResponse:
 
 def health(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"status": "ok"})
+
+
+def database_keepalive(request: HttpRequest) -> JsonResponse:
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    expected = os.getenv("KEEPALIVE_SECRET")
+    supplied = request.headers.get("Authorization", "").removeprefix("Bearer ")
+
+    if not expected:
+        return JsonResponse({"error": "Keepalive is unavailable"}, status=503)
+
+    if not hmac.compare_digest(supplied, expected):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+
+    response = JsonResponse({"status": "ok", "database": "connected"})
+    response["Cache-Control"] = "no-store"
+    return response
