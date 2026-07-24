@@ -27,7 +27,7 @@ def home(request: HttpRequest) -> HttpResponse:
           </head>
           <body>
             <h1>Polsk App</h1>
-            <p>Den første version er live.</p>
+            <p>Automatisk deployment virker.</p>
           </body>
         </html>
         """
