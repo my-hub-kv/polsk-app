@@ -1,12 +1,11 @@
 from datetime import timedelta
 from unittest.mock import patch
 
-from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from apps.accounts.models import Invitation, LoginThrottle
+from apps.accounts.models import LoginThrottle
 from apps.accounts.services import LOGIN_ATTEMPT_LIMIT, THROTTLE_RETENTION
 from apps.events.models import EventYear
 from apps.notifications.models import Notification, NotificationDelivery, NotificationState
@@ -15,7 +14,6 @@ from apps.people.models import (
     EventParticipation,
     EventRoleAssignment,
     Household,
-    HouseholdMembership,
     Participant,
 )
 from apps.people.services import ACTIVE_EVENT_SESSION_KEY, ACTIVE_PARTICIPANT_SESSION_KEY
@@ -140,56 +138,6 @@ class ClientErrorTests(TestCase):
         )
         self.assertEqual(response.status_code, 204)
         logger.error.assert_called_once()
-
-
-class EmergencyAdminTests(TestCase):
-    def setUp(self) -> None:
-        self.superuser = get_user_model().objects.create_superuser(
-            username="admin",
-            password="safe-test-password",
-        )
-
-    def test_superuser_can_open_registered_emergency_admin_lists(self) -> None:
-        self.client.force_login(self.superuser)
-        changelists = (
-            "admin:accounts_user_changelist",
-            "admin:accounts_invitation_changelist",
-            "admin:events_eventyear_changelist",
-            "admin:people_participant_changelist",
-            "admin:people_eventparticipation_changelist",
-            "admin:people_eventroleassignment_changelist",
-            "admin:people_household_changelist",
-            "admin:notifications_notification_changelist",
-            "admin:notifications_notificationdelivery_changelist",
-        )
-
-        for url_name in changelists:
-            with self.subTest(url_name=url_name):
-                self.assertEqual(self.client.get(reverse(url_name)).status_code, 200)
-
-    def test_sensitive_operational_records_are_read_only_or_not_deletable(self) -> None:
-        protected_models = (
-            get_user_model(),
-            Invitation,
-            LoginThrottle,
-            EventYear,
-            Participant,
-            EventParticipation,
-            Household,
-            HouseholdMembership,
-            Notification,
-            NotificationState,
-            NotificationDelivery,
-        )
-
-        for model in protected_models:
-            with self.subTest(model=model.__name__):
-                self.assertFalse(admin.site._registry[model].has_delete_permission(None))
-
-        for model in (Notification, NotificationState, NotificationDelivery):
-            with self.subTest(model=model.__name__):
-                self.assertFalse(admin.site._registry[model].has_add_permission(None))
-                self.assertFalse(admin.site._registry[model].has_change_permission(None))
 
 
 @override_settings(

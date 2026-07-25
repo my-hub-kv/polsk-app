@@ -26,6 +26,8 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        verbose_name = "notifikation"
+        verbose_name_plural = "notifikationer"
         constraints = [
             models.UniqueConstraint(
                 fields=["event_year", "recipient", "idempotency_key"],
@@ -48,6 +50,9 @@ class Notification(models.Model):
         ).exists():
             raise ValidationError("Notification recipient must participate in the event year.")
 
+    def __str__(self) -> str:
+        return f"{self.title} — {self.recipient}"
+
 
 class NotificationState(models.Model):
     """Read boundary for one account in one event year."""
@@ -57,6 +62,8 @@ class NotificationState(models.Model):
     last_opened_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        verbose_name = "notifikationsstatus"
+        verbose_name_plural = "notifikationsstatusser"
         constraints = [
             models.UniqueConstraint(
                 fields=["recipient", "event_year"],
@@ -64,16 +71,19 @@ class NotificationState(models.Model):
             )
         ]
 
+    def __str__(self) -> str:
+        return f"{self.recipient} — {self.event_year}"
+
 
 class NotificationDelivery(models.Model):
     """Provider delivery queue with retry-safe state."""
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        PROCESSING = "processing", "Processing"
-        SENT = "sent", "Sent"
-        RETRY = "retry", "Retry"
-        FAILED = "failed", "Failed"
+        PENDING = "pending", "Afventer"
+        PROCESSING = "processing", "Behandles"
+        SENT = "sent", "Sendt"
+        RETRY = "retry", "Prøv igen"
+        FAILED = "failed", "Mislykkedes"
 
     notification = models.ForeignKey(
         Notification, on_delete=models.CASCADE, related_name="deliveries"
@@ -87,6 +97,8 @@ class NotificationDelivery(models.Model):
     error_code = models.CharField(max_length=80, blank=True)
 
     class Meta:
+        verbose_name = "notifikationslevering"
+        verbose_name_plural = "notifikationsleveringer"
         constraints = [
             models.UniqueConstraint(
                 fields=["notification", "provider"],
@@ -94,3 +106,6 @@ class NotificationDelivery(models.Model):
             )
         ]
         indexes = [models.Index(fields=["status", "available_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.notification} — {self.get_status_display()}"

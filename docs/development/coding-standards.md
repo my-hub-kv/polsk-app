@@ -39,6 +39,17 @@ The project uses an 88-character line-length target, except for unavoidable URLs
 - Preserve Django template autoescaping. Do not use `mark_safe()` or raw HTML from untrusted data without a documented, reviewed sanitisation boundary.
 - Validate redirect destinations, use Django CSRF protection for browser session requests, and treat external adapters as fallible boundaries.
 
+## Django Admin
+
+Django Admin is an unlinked internal emergency backend, not a participant-facing workflow. Every persisted Polsk model is registered so authorised staff can inspect operational data when needed. Access uses Django's standard active-staff login and model-permission checks; Admin has no active-event or participant-profile scope, so a staff account permitted to view a model can view all of that model's event years and records.
+
+- Give every registered model a concise, stable, human-readable `__str__()` value. It must not expose passwords, tokens, digests, session identifiers, message bodies, or unnecessary personal data.
+- Configure each changelist deliberately with useful `list_display`, `search_fields`, `list_filter`, deterministic ordering, and `list_select_related` or `prefetch_related` for every relation used by columns or string representations.
+- Use `autocomplete_fields` for editable dynamic `ForeignKey` and `ManyToManyField` relations. The related admin must provide useful `search_fields` and a useful `__str__()` value. Standard selects remain appropriate for genuinely small, fixed choices.
+- Do not add Polsk-specific read-only modes, hidden fields, CRUD permission overrides, disabled bulk actions, event scopes, or participant-profile scopes. The emergency backend uses Django's standard model forms and normal staff model permissions.
+- Direct emergency edits and Django's built-in bulk actions are permitted when staff need to repair data. Admin does not infer or enforce an active event scope; the operator must preserve cross-record invariants, including keeping a participation and its household membership in the same event year.
+- Django's ordinary field and model-form validation, plus actual database constraints, remain in effect. They are framework integrity checks rather than participant-workflow rules.
+
 ## Change quality
 
 - Prefer small, cohesive, reviewable changes. Update tests and relevant documentation in the same change.

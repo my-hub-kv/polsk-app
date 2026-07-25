@@ -116,6 +116,8 @@ jobs:
       PGSSLMODE: require
       PGCHANNELBINDING: require
       POLSK_DATABASE_CONNECTION_MODE: direct
+      APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+      KEEPALIVE_SECRET: ${{ secrets.KEEPALIVE_SECRET }}
 
     steps:
       - name: Check out repository
@@ -131,6 +133,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+
+      - name: Wake the database through the deployed application
+        run: |
+          test -n "$APP_BASE_URL"
+          test -n "$KEEPALIVE_SECRET"
+          curl --fail --show-error --silent \
+            --retry 3 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            --connect-timeout 30 \
+            --max-time 180 \
+            --request POST \
+            --header "Authorization: Bearer $KEEPALIVE_SECRET" \
+            --header "Cache-Control: no-store" \
+            "${APP_BASE_URL%/}/internal/database-keepalive/"
 
       - name: Show migration plan
         run: python manage.py migrate --plan
