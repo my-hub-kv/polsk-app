@@ -27,6 +27,17 @@ urlpatterns = [
     path("beskeder/", views.messages, name="messages"),
     path("mad-og-indkoeb/", views.food_and_shopping, name="food_and_shopping"),
     path("mere/", views.more, name="more"),
+    path("administration/", views.administration, name="administration"),
+    path(
+        "administration/behandl-notifikationer/",
+        views.process_notifications,
+        name="process_notifications",
+    ),
+    path(
+        "administration/ryd-loginbeskyttelse/",
+        views.cleanup_login_protection,
+        name="cleanup_login_protection",
+    ),
     path("aktiviteter/", views.activities, name="activities"),
     path("deltagere/", views.directory, name="directory"),
     path(

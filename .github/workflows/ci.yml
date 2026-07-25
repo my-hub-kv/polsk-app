@@ -88,4 +88,9 @@ jobs:
         run: python manage.py collectstatic --noinput
 
       - name: Run tests
+        # Django's test client uses HTTP unless a test explicitly requests HTTPS.
+        # Production settings are checked above; test mode keeps view assertions
+        # focused on their intended behaviour rather than the HTTPS redirect.
+        env:
+          DJANGO_DEBUG: "True"
         run: python manage.py test

@@ -34,7 +34,7 @@ class DeliveryTests(TestCase):
         )
         EventParticipation.objects.create(event_year=self.event, participant=participant)
 
-    @patch("apps.notifications.management.commands.deliver_notifications.send_notification")
+    @patch("apps.notifications.services.send_notification")
     def test_delivery_is_idempotent(self, send_notification) -> None:
         notification = enqueue_notification(event_year_id=self.event.pk, recipient_id=self.user.pk, title="Nyt", body="Indhold", destination_path="/", idempotency_key="unique")
         enqueue_notification(event_year_id=self.event.pk, recipient_id=self.user.pk, title="Nyt", body="Indhold", destination_path="/", idempotency_key="unique")
@@ -43,6 +43,40 @@ class DeliveryTests(TestCase):
         self.assertEqual(send_notification.call_count, 1)
         self.assertEqual(notification.deliveries.get().status, NotificationDelivery.Status.SENT)
         self.assertEqual(send_notification.call_args.kwargs["title"], "Opdatering i Polsk App")
+
+    @patch("apps.notifications.services.send_notification")
+    def test_new_delivery_is_sent_after_the_transaction_commits(self, send_notification) -> None:
+        with self.captureOnCommitCallbacks(execute=True):
+            notification = enqueue_notification(
+                event_year_id=self.event.pk,
+                recipient_id=self.user.pk,
+                title="Nyt",
+                body="Indhold",
+                destination_path="/",
+                idempotency_key="synchronous",
+            )
+
+        delivery = notification.deliveries.get()
+        self.assertEqual(send_notification.call_count, 1)
+        self.assertEqual(delivery.status, NotificationDelivery.Status.SENT)
+
+    @override_settings(NOTIFICATION_DELIVERY_SYNCHRONOUS=False)
+    @patch("apps.notifications.services.send_notification")
+    def test_synchronous_delivery_can_be_disabled_for_a_future_dispatcher(
+        self, send_notification
+    ) -> None:
+        with self.captureOnCommitCallbacks(execute=True):
+            notification = enqueue_notification(
+                event_year_id=self.event.pk,
+                recipient_id=self.user.pk,
+                title="Nyt",
+                body="Indhold",
+                destination_path="/",
+                idempotency_key="scheduled",
+            )
+
+        self.assertEqual(send_notification.call_count, 0)
+        self.assertEqual(notification.deliveries.get().status, NotificationDelivery.Status.PENDING)
 
     def test_idempotency_key_is_scoped_to_recipient_and_event_year(self) -> None:
         second_user = get_user_model().objects.create_user(
@@ -78,7 +112,7 @@ class DeliveryTests(TestCase):
         self.assertNotEqual(first.pk, second.pk)
         self.assertEqual(Notification.objects.count(), 2)
 
-    @patch("apps.notifications.management.commands.deliver_notifications.send_notification")
+    @patch("apps.notifications.services.send_notification")
     def test_uncertain_delivery_is_not_retried(self, send_notification) -> None:
         notification = enqueue_notification(
             event_year_id=self.event.pk,

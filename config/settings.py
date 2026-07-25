@@ -198,6 +198,13 @@ STARTIAPP_BRAND_NAME = os.getenv("STARTIAPP_BRAND_NAME", "")
 STARTIAPP_API_KEY = os.getenv("STARTIAPP_API_KEY", "")
 STARTIAPP_ENVIRONMENT_TAG = os.getenv("STARTIAPP_ENVIRONMENT_TAG", "development")
 
+notification_delivery_synchronous = os.getenv(
+    "NOTIFICATION_DELIVERY_SYNCHRONOUS", "True"
+).lower()
+if notification_delivery_synchronous not in {"true", "false"}:
+    raise RuntimeError("NOTIFICATION_DELIVERY_SYNCHRONOUS must be true or false")
+NOTIFICATION_DELIVERY_SYNCHRONOUS = notification_delivery_synchronous == "true"
+
 if STARTIAPP_BRAND_NAME and not re.fullmatch(r"[a-z0-9-]+", STARTIAPP_BRAND_NAME):
     raise RuntimeError("STARTIAPP_BRAND_NAME must contain lowercase letters, digits, and hyphens")
 

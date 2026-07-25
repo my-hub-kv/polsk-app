@@ -6,7 +6,9 @@ import logging
 import os
 
 from django.conf import settings
+from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db import connection
 from django.http import (
     HttpRequest,
@@ -19,13 +21,17 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.models import Invitation
-from apps.accounts.services import create_invitation
+from apps.accounts.services import create_invitation, purge_expired_throttle_state
 from apps.notifications.models import Notification
 from apps.notifications.providers.starti_push import starti_user_id_for_user
-from apps.notifications.services import mark_notification_center_opened, unread_count
+from apps.notifications.services import (
+    deliver_due_notifications,
+    mark_notification_center_opened,
+    unread_count,
+)
 from apps.people.forms import ParticipantOnboardingForm
 from apps.people.models import EventParticipation
 from apps.people.services import (
@@ -42,6 +48,7 @@ logger = logging.getLogger(__name__)
 MAX_CLIENT_ERROR_BODY_BYTES = 4_096
 MAX_CLIENT_ERROR_MESSAGE_LENGTH = 300
 MAX_CLIENT_ERROR_SOURCE_LENGTH = 200
+ADMIN_NOTIFICATION_DELIVERY_LIMIT = 10
 
 PRIMARY_NAVIGATION = (
     ("agenda", "Agenda", "core:home", "calendar"),
@@ -164,7 +171,69 @@ def more(request: HttpRequest) -> HttpResponse:
         ("Tidligere år", "Gå på opdagelse i eventets historik.", reverse("core:history")),
         ("Vejr", "Se vejr som støtte til planlægningen.", reverse("core:weather")),
     ]
+    active_context = active_context_for_request(request)
+    if active_context and event_administrator(active_context.event_participation):
+        context["more_items"].append(
+            (
+                "Administration",
+                "Behandl notifikationer og ryd udløbet loginbeskyttelse.",
+                reverse("core:administration"),
+            )
+        )
     return render(request, "core/more.html", context)
+
+
+def _active_event_administrator(request: HttpRequest):
+    """Return the active event membership only for a server-authorized administrator."""
+    active_context = active_context_for_request(request)
+    if active_context is None or not event_administrator(
+        active_context.event_participation
+    ):
+        raise PermissionDenied
+    return active_context.event_participation
+
+
+@login_required
+@ensure_csrf_cookie
+@require_GET
+def administration(request: HttpRequest) -> HttpResponse:
+    """Render restricted operational controls for the active event administrator."""
+    _active_event_administrator(request)
+    context = _shell_context(request, "more", "Administration")
+    context["notification_delivery_limit"] = ADMIN_NOTIFICATION_DELIVERY_LIMIT
+    return render(request, "core/administration.html", context)
+
+
+@login_required
+@require_POST
+def process_notifications(request: HttpRequest) -> HttpResponse:
+    """Process a bounded due delivery batch within the administrator's event year."""
+    participation = _active_event_administrator(request)
+    result = deliver_due_notifications(
+        limit=ADMIN_NOTIFICATION_DELIVERY_LIMIT,
+        event_year_id=participation.event_year_id,
+    )
+    if result.processed == 0:
+        django_messages.info(request, "Der er ingen afventende notifikationer.")
+    else:
+        django_messages.success(
+            request,
+            (
+                f"Behandlede {result.processed} notifikationer: {result.sent} sendt, "
+                f"{result.retrying} afventer nyt forsøg og {result.failed} kunne ikke sendes."
+            ),
+        )
+    return redirect("core:administration")
+
+
+@login_required
+@require_POST
+def cleanup_login_protection(request: HttpRequest) -> HttpResponse:
+    """Delete expired throttle fingerprints after server-side administrator authorization."""
+    _active_event_administrator(request)
+    deleted = purge_expired_throttle_state()
+    django_messages.success(request, f"Ryddede {deleted} udløbne loginbeskyttelser.")
+    return redirect("core:administration")
 
 
 @login_required

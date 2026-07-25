@@ -1,14 +1,18 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from apps.accounts.services import LOGIN_ATTEMPT_LIMIT
+from apps.accounts.models import LoginThrottle
+from apps.accounts.services import LOGIN_ATTEMPT_LIMIT, THROTTLE_RETENTION
 from apps.events.models import EventYear
-from apps.notifications.models import Notification, NotificationState
-from apps.people.models import EventParticipation, Household, HouseholdMembership, Participant
+from apps.notifications.models import Notification, NotificationDelivery, NotificationState
+from apps.notifications.services import enqueue_notification
+from apps.people.models import EventParticipation, EventRoleAssignment, Participant
 from apps.people.services import ACTIVE_EVENT_SESSION_KEY, ACTIVE_PARTICIPANT_SESSION_KEY
+from django.utils import timezone
 
 
 class AuthenticationShellTests(TestCase):
@@ -129,3 +133,175 @@ class ClientErrorTests(TestCase):
         )
         self.assertEqual(response.status_code, 204)
         logger.error.assert_called_once()
+
+
+@override_settings(
+    STARTIAPP_BRAND_NAME="test-brand",
+    STARTIAPP_API_KEY="test-key",
+    APP_ORIGIN="https://example.test",
+    NOTIFICATION_DELIVERY_SYNCHRONOUS=False,
+)
+class AdministrationTests(TestCase):
+    def setUp(self) -> None:
+        self.administrator = get_user_model().objects.create_user(
+            username="administrator", password="safe-test-password"
+        )
+        self.event = EventYear.objects.create(
+            name="Polsk 2026",
+            year=2026,
+            starts_on="2026-07-01",
+            ends_on="2026-07-05",
+            status="active",
+        )
+        participant = Participant.objects.create(
+            display_name="Administrator",
+            age_group=Participant.AgeGroup.ADULT,
+            login_account=self.administrator,
+        )
+        self.participation = EventParticipation.objects.create(
+            event_year=self.event,
+            participant=participant,
+        )
+        EventRoleAssignment.objects.create(
+            participation=self.participation,
+            role=EventRoleAssignment.Role.ADMINISTRATOR,
+        )
+
+    @patch("apps.notifications.services.send_notification")
+    def test_administrator_processes_only_active_event_notifications(
+        self, send_notification
+    ) -> None:
+        active_notification = enqueue_notification(
+            event_year_id=self.event.pk,
+            recipient_id=self.administrator.pk,
+            title="Aktiv",
+            body="Indhold",
+            destination_path="/",
+            idempotency_key="active",
+        )
+        other_user = get_user_model().objects.create_user(
+            username="other-recipient", password="safe-test-password"
+        )
+        other_event = EventYear.objects.create(
+            name="Polsk 2027",
+            year=2027,
+            starts_on="2027-07-01",
+            ends_on="2027-07-05",
+            status="active",
+        )
+        other_participant = Participant.objects.create(
+            display_name="Other recipient",
+            age_group=Participant.AgeGroup.ADULT,
+            login_account=other_user,
+        )
+        EventParticipation.objects.create(
+            event_year=other_event,
+            participant=other_participant,
+        )
+        other_notification = enqueue_notification(
+            event_year_id=other_event.pk,
+            recipient_id=other_user.pk,
+            title="Andet år",
+            body="Indhold",
+            destination_path="/",
+            idempotency_key="other-event",
+        )
+
+        self.client.force_login(self.administrator)
+        response = self.client.get(reverse("core:more"))
+        self.assertContains(response, "Administration")
+        response = self.client.get(reverse("core:administration"))
+        self.assertContains(response, "Behandl afventende notifikationer")
+        response = self.client.post(reverse("core:process_notifications"))
+
+        self.assertRedirects(response, reverse("core:administration"))
+        self.assertEqual(send_notification.call_count, 1)
+        self.assertEqual(
+            active_notification.deliveries.get().status,
+            NotificationDelivery.Status.SENT,
+        )
+        self.assertEqual(
+            other_notification.deliveries.get().status,
+            NotificationDelivery.Status.PENDING,
+        )
+
+    @patch("apps.notifications.services.send_notification")
+    def test_administrator_notification_run_is_limited_to_ten(self, send_notification) -> None:
+        notifications = [
+            enqueue_notification(
+                event_year_id=self.event.pk,
+                recipient_id=self.administrator.pk,
+                title="Aktiv",
+                body="Indhold",
+                destination_path="/",
+                idempotency_key=f"batch-{index}",
+            )
+            for index in range(11)
+        ]
+
+        self.client.force_login(self.administrator)
+        response = self.client.post(reverse("core:process_notifications"))
+
+        self.assertRedirects(response, reverse("core:administration"))
+        self.assertEqual(send_notification.call_count, 10)
+        self.assertEqual(
+            NotificationDelivery.objects.filter(
+                notification__in=notifications,
+                status=NotificationDelivery.Status.PENDING,
+            ).count(),
+            1,
+        )
+
+    def test_administration_denies_non_administrators_and_requires_post(self) -> None:
+        non_administrator = get_user_model().objects.create_user(
+            username="participant", password="safe-test-password"
+        )
+        participant = Participant.objects.create(
+            display_name="Participant",
+            age_group=Participant.AgeGroup.ADULT,
+            login_account=non_administrator,
+        )
+        EventParticipation.objects.create(event_year=self.event, participant=participant)
+
+        self.client.force_login(non_administrator)
+        response = self.client.get(reverse("core:more"))
+        self.assertNotContains(response, "Administration")
+        self.assertEqual(self.client.get(reverse("core:administration")).status_code, 403)
+        self.assertEqual(
+            self.client.post(reverse("core:process_notifications")).status_code,
+            403,
+        )
+        self.client.force_login(self.administrator)
+        self.assertEqual(
+            self.client.get(reverse("core:process_notifications")).status_code,
+            405,
+        )
+
+    def test_administrator_can_remove_only_expired_throttle_state(self) -> None:
+        expired = LoginThrottle.objects.create(
+            key_digest="expired",
+            window_started_at=timezone.now(),
+        )
+        fresh = LoginThrottle.objects.create(
+            key_digest="fresh",
+            window_started_at=timezone.now(),
+        )
+        LoginThrottle.objects.filter(pk=expired.pk).update(
+            updated_at=timezone.now() - THROTTLE_RETENTION - timedelta(seconds=1)
+        )
+
+        self.client.force_login(self.administrator)
+        response = self.client.post(reverse("core:cleanup_login_protection"))
+
+        self.assertRedirects(response, reverse("core:administration"))
+        self.assertFalse(LoginThrottle.objects.filter(pk=expired.pk).exists())
+        self.assertTrue(LoginThrottle.objects.filter(pk=fresh.pk).exists())
+
+    def test_administrator_actions_require_csrf(self) -> None:
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.administrator)
+        client.get(reverse("core:administration"))
+
+        response = client.post(reverse("core:process_notifications"))
+
+        self.assertEqual(response.status_code, 403)

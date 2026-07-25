@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+  <section class="more-page" aria-labelledby="administration-title">
+    <div class="page-heading">
+      <p class="eyebrow">Administration</p>
+      <h1 id="administration-title">Drift</h1>
+      <p>Brug kun disse handlinger, hvis afventende notifikationer eller udløbet loginbeskyttelse skal behandles.</p>
+    </div>
+    {% if messages %}
+      <div class="operation-message" role="status">
+        {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    <div class="more-grid administration-actions">
+      <form class="more-card" method="post" action="{% url 'core:process_notifications' %}">
+        {% csrf_token %}
+        <span><strong>Behandl afventende notifikationer</strong><small>Sender højst {{ notification_delivery_limit }} ventende eller genforsøgbare notifikationer for det aktive eventår.</small></span>
+        <button class="operation-button" type="submit">Start</button>
+      </form>
+      <form class="more-card" method="post" action="{% url 'core:cleanup_login_protection' %}">
+        {% csrf_token %}
+        <span><strong>Ryd udløbet loginbeskyttelse</strong><small>Fjerner kun udløbne, irreversible throttle-fingeraftryk. Konti ændres ikke.</small></span>
+        <button class="operation-button" type="submit">Start</button>
+      </form>
+    </div>
+  </section>
+{% endblock %}

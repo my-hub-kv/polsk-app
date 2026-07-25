@@ -2,19 +2,41 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import timedelta
+import logging
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
 from apps.people.models import EventParticipation
 from .models import Notification, NotificationDelivery, NotificationState
-from .providers.starti_push import is_configured as starti_push_is_configured
+from .providers.starti_push import (
+    StartiPushError,
+    StartiPushUncertainDeliveryError,
+    is_configured as starti_push_is_configured,
+    send_notification,
+)
 
 
 DELIVERY_LEASE = timedelta(minutes=10)
 PUSH_TITLE = "Opdatering i Polsk App"
 PUSH_BODY = "Åbn appen for at se nyt."
+SYNCHRONOUS_DELIVERY_LIMIT = 1
+
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class DeliveryDispatchResult:
+    """Safe aggregate outcome from one bounded provider-delivery run."""
+
+    processed: int
+    sent: int
+    retrying: int
+    failed: int
 
 
 def enqueue_notification(
@@ -53,10 +75,14 @@ def enqueue_notification(
             },
         )
         if created and starti_push_is_configured():
-            NotificationDelivery.objects.create(
+            delivery = NotificationDelivery.objects.create(
                 notification=notification,
                 available_at=timezone.now(),
             )
+            if settings.NOTIFICATION_DELIVERY_SYNCHRONOUS:
+                transaction.on_commit(
+                    lambda: _deliver_notification_synchronously(delivery.pk)
+                )
         return notification
 
 
@@ -82,28 +108,47 @@ def mark_notification_center_opened(*, recipient_id: int, event_year_id: int) ->
     )
 
 
-def claim_due_deliveries(limit: int = 50) -> list[NotificationDelivery]:
+def claim_due_deliveries(
+    *,
+    limit: int = 50,
+    event_year_id: int | None = None,
+    delivery_id: int | None = None,
+) -> list[NotificationDelivery]:
     """Claim a bounded batch for one dispatcher without duplicate processing."""
+    if not 1 <= limit <= 50:
+        raise ValueError("limit must be between 1 and 50")
     now = timezone.now()
     with transaction.atomic():
-        NotificationDelivery.objects.filter(
+        stale_deliveries = NotificationDelivery.objects.filter(
             status=NotificationDelivery.Status.PROCESSING,
             claimed_at__lte=now - DELIVERY_LEASE,
-        ).update(
+        )
+        due_deliveries = NotificationDelivery.objects.filter(
+            status__in=[
+                NotificationDelivery.Status.PENDING,
+                NotificationDelivery.Status.RETRY,
+            ],
+            available_at__lte=now,
+        )
+        if event_year_id is not None:
+            stale_deliveries = stale_deliveries.filter(
+                notification__event_year_id=event_year_id
+            )
+            due_deliveries = due_deliveries.filter(
+                notification__event_year_id=event_year_id
+            )
+        if delivery_id is not None:
+            stale_deliveries = stale_deliveries.filter(pk=delivery_id)
+            due_deliveries = due_deliveries.filter(pk=delivery_id)
+
+        stale_deliveries.update(
             status=NotificationDelivery.Status.RETRY,
             available_at=now,
             claimed_at=None,
             error_code="lease_expired",
         )
         deliveries = list(
-            NotificationDelivery.objects.select_for_update(skip_locked=True)
-            .filter(
-                status__in=[
-                    NotificationDelivery.Status.PENDING,
-                    NotificationDelivery.Status.RETRY,
-                ],
-                available_at__lte=now,
-            )
+            due_deliveries.select_for_update(skip_locked=True)
             .select_related("notification__recipient")
             .order_by("available_at")[:limit]
         )
@@ -113,6 +158,69 @@ def claim_due_deliveries(limit: int = 50) -> list[NotificationDelivery]:
             delivery.claimed_at = now
             delivery.save(update_fields=["status", "attempts", "claimed_at"])
     return deliveries
+
+
+def deliver_due_notifications(
+    *,
+    limit: int = 50,
+    event_year_id: int | None = None,
+    delivery_id: int | None = None,
+) -> DeliveryDispatchResult:
+    """Deliver a claimed batch outside transactions and return only safe counts."""
+    deliveries = claim_due_deliveries(
+        limit=limit,
+        event_year_id=event_year_id,
+        delivery_id=delivery_id,
+    )
+    sent = 0
+    retrying = 0
+    failed = 0
+    for delivery in deliveries:
+        notification = delivery.notification
+        try:
+            title, body = push_copy()
+            send_notification(
+                user=notification.recipient,
+                title=title,
+                body=body,
+                open_to_url=notification.destination_path,
+                badge_count=unread_count(
+                    recipient_id=notification.recipient_id,
+                    event_year_id=notification.event_year_id,
+                ),
+            )
+        except StartiPushUncertainDeliveryError as error:
+            mark_delivery_uncertain(delivery, str(error))
+            failed += 1
+        except StartiPushError as error:
+            mark_delivery_failed(delivery, str(error))
+            delivery.refresh_from_db(fields=["status"])
+            if delivery.status == NotificationDelivery.Status.RETRY:
+                retrying += 1
+            else:
+                failed += 1
+        else:
+            mark_delivery_sent(delivery)
+            sent += 1
+    return DeliveryDispatchResult(
+        processed=len(deliveries),
+        sent=sent,
+        retrying=retrying,
+        failed=failed,
+    )
+
+
+def _deliver_notification_synchronously(delivery_id: int) -> None:
+    """Attempt one new delivery after its transaction commits without breaking the request."""
+    try:
+        deliver_due_notifications(
+            limit=SYNCHRONOUS_DELIVERY_LIMIT,
+            delivery_id=delivery_id,
+        )
+    except Exception:
+        # This is an external-provider boundary. The durable queue remains available
+        # for an administrator or a future scheduler if an unexpected failure occurs.
+        logger.exception("synchronous_notification_delivery_failed")
 
 
 def mark_delivery_sent(delivery: NotificationDelivery) -> None:

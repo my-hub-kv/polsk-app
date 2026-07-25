@@ -19,16 +19,3 @@ services:
       - fromGroup: polsk-app-runtime
       - key: KEEPALIVE_SECRET
         sync: false
-  - type: cron
-    name: polsk-app-notification-delivery
-    runtime: python
-    plan: starter
-    region: frankfurt
-    branch: main
-    schedule: "*/5 * * * *"
-    buildCommand: bash build.sh
-    startCommand: >-
-      python manage.py deliver_notifications &&
-      python manage.py cleanup_throttle_state
-    envVars:
-      - fromGroup: polsk-app-runtime
