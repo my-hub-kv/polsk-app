@@ -1,6 +1,6 @@
 # Administration user stories
 
-Product status: Confirmed. Implementation status: Planned.
+Product status: Confirmed. Implementation status: Emergency-backend foundation implemented; broader administration workflow planned.
 
 ## ADM-01: Manage an event year
 
@@ -41,3 +41,7 @@ Shared history survives participant deletion.
 ### Out of scope
 
 Unreviewed bulk destructive actions.
+
+## Current emergency backend
+
+Django Admin remains intentionally unlinked from the participant UI. It provides searchable, event-scoped lists for event years, participants, memberships, households, roles, accounts, invitations, notifications, and delivery state. Invitations, throttle fingerprints, notifications, notification read state, delivery queue records, and household membership records are inspection-only so that Admin cannot bypass their services or invariants. Ordinary account, event, participant, participation, role, and household changes remain available only to Django superusers for emergency recovery.
