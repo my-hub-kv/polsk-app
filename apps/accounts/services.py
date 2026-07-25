@@ -192,7 +192,9 @@ def redeem_invitation(
     now = timezone.now()
     with transaction.atomic():
         invitation = (
-            Invitation.objects.select_for_update()
+            # The invitation is the single-use concurrency boundary. Locking only
+            # it avoids PostgreSQL attempting to lock the nullable login-account join.
+            Invitation.objects.select_for_update(of=("self",))
             .select_related("participation__participant__login_account")
             .filter(
                 token_digest=digest,
