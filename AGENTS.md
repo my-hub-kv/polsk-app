@@ -6,7 +6,7 @@ Polsk App is an invitation-only application for one recurring yearly family even
 
 “Polsk” is the event name, unrelated to Poland. Do not use Polish language, national imagery, flags, or colours.
 
-Read [docs/index.md](docs/index.md) before product work. Use this precedence: direct human instructions; confirmed product rules; domain invariants; accepted ADRs; an approved written feature brief when one exists; tests and existing behaviour; then general conventions. Stop and report conflicts or ambiguity; never invent a product decision or commit raw conversations or private reasoning.
+Read [docs/index.md](docs/index.md) before product or code work. Use this precedence: direct human instructions; confirmed product rules; domain invariants; accepted ADRs; an approved written feature brief when one exists; tests and existing behaviour; then general conventions. Stop and report conflicts or ambiguity; never invent a product decision or commit raw conversations or private reasoning.
 
 ## Baseline and boundaries
 
@@ -28,9 +28,23 @@ Read [docs/index.md](docs/index.md) before product work. Use this precedence: di
 - Never access a hosted production database or shared hosted development database. Codex uses only isolated local or disposable test databases containing synthetic data; authorised humans perform shared-environment database operations outside Codex.
 - Enforce authorization on the server. Scope every event-owned object to its event year and prevent IDOR; hidden UI is never authorization.
 - Do not weaken authentication, CSRF, secure cookies, HTTPS, or production failure handling. Do not expose secrets to untrusted pull-request workflows.
+- Derive event-year, acting account, active participant, and authorization scope from trusted server-side state. Treat every client-supplied object ID, hidden field, query parameter, and form choice as untrusted until it is scoped and authorized server-side.
 - Participant profiles and login credentials are separate. An adult may act as a child only within the same household; record both acting account and active participant for auditable actions.
 - Do not store exact birth dates or years. Age groups are 0–3, 4–11, 12–18, and adult. Phone numbers and dietary information are visible to all participants only with clear disclosure before saving.
 - Participant deletion removes sensitive personal data while preserving shared history through explicit nullable references or anonymisation. Never cascade-delete shared history.
+- Use Django's established authentication, password, session, and CSRF mechanisms unless an approved ADR requires otherwise. Invitation and recovery tokens must be random, stored only as a hash where practical, expire, be single use, and have enumeration-safe failure handling.
+
+## Required implementation reading and skills
+
+Before changing application code, tests, templates, settings, migrations, or CI, read the documentation index; the relevant product, domain, architecture, and ADR documents; and the development guides for coding standards, comments, testing, and security. Read the observability guide before changing logging, error handling, or browser JavaScript, and the migration guide before any model or persistence change.
+
+Read and follow the repository skill that matches the work before implementation:
+
+- `.agents/skills/implement-user-story/` for a bounded approved feature or written brief.
+- `.agents/skills/django-model-change/` for models, relationships, constraints, indexes, deletion semantics, or migrations.
+- `.agents/skills/polsk-security-review/` before handing off authentication, authorization, household switching, messaging, food, shopping, notifications, deletion, administration, or other sensitive changes.
+
+If no skill applies, follow the development guides directly. Skills supplement this file and the source-of-truth documentation; they never authorize an unresolved product decision, a dependency, a deployment, or a Git state change.
 
 ## Implementation and Django rules
 
@@ -43,10 +57,10 @@ Read [docs/index.md](docs/index.md) before product work. Use this precedence: di
 
 Create schema migrations with `python manage.py makemigrations`; never hand-write schema migration files. Never modify an existing data migration after it has been created or applied—add a new, reviewed migration instead. Use repository scripts when present, plus `python manage.py makemigrations --check --dry-run` and `git diff --check`. Test successful and denied authorization, event-year isolation, profile switching, deletion, constraints, CSV safety, date boundaries, and mocked provider adapters as relevant. CI PostgreSQL 17 is authoritative.
 
-Follow `docs/development/coding-standards.md` and `docs/development/commenting-and-code-documentation.md` for Python, Django, comments, and docstrings.
+Follow `docs/development/coding-standards.md` and `docs/development/commenting-and-code-documentation.md` for Python, Django, comments, and docstrings. The repository rules take precedence over external style guides; the Google Python Style Guide and PEP 8 are supplementary references.
 
 Documentation status is deliberate: **Confirmed** means product behaviour is approved; **Candidate** means it is a proposal and must not be implemented as settled behaviour; **Planned** means approved behaviour has no implementation yet; **Implemented** means tests and code enforce it. Never promote a Candidate merely because it is convenient to build.
 
 ## Review focus
 
-Flag missing event scoping or object authorization; insecure profile switching; acting-account/active-profile confusion; personal data or secrets in any artifact; frontend-only rules; destructive migrations; missing constraints/tests; N+1 list risks; unmocked external calls; non-Danish visible text; undocumented behaviour; unjustified dependencies; and scope expansion.
+Flag missing event scoping or object authorization; insecure profile switching; acting-account/active-profile confusion; client-trusted scope or object IDs; personal data or secrets in any artifact; frontend-only rules; destructive migrations; missing constraints/tests; N+1 list risks; unmocked external calls; non-Danish visible text; undocumented behaviour; unjustified dependencies; and scope expansion.
