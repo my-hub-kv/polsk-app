@@ -2,11 +2,18 @@
 
 Use this page with [commenting and code documentation](commenting-and-code-documentation.md). Source identifiers, code comments, tests, commit messages, and technical documentation are English; user-visible text is Danish.
 
+## Standard hierarchy and external references
+
+This page, relevant product/domain documents, accepted ADRs, and the repository configuration are the project standard. They take precedence over external guidance. Use [PEP 8](https://peps.python.org/pep-0008/) as the Python baseline and the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) as a supplementary reference for readable imports, type annotations, docstrings, and error handling. Follow Djangoâ€™s documented APIs and the projectâ€™s supported versions rather than copying compatibility patterns from projects that support multiple Django or Python releases.
+
+The project uses an 88-character line-length target, except for unavoidable URLs, paths, generated migration code, and deliberately unbroken strings. Wrap readable expressions using parentheses; never use a backslash solely for line continuation. Do not introduce automated formatters, linters, type checkers, or pre-commit hooks as part of feature work: tooling changes need their own approved, documented change with pinned development dependencies and CI coverage.
+
 ## Python
 
 - Follow PEP 8 naming: `CapWords` classes, `snake_case` functions/variables, and `UPPER_CASE` constants. Use descriptive domain names rather than abbreviations.
 - Group imports as standard library, third-party, Django, then local application imports. Do not use wildcard imports.
 - Add type hints to public functions, service functions, selectors, and non-trivial helpers. Prefer precise domain types over `Any` or unstructured dictionaries when a stable type is known.
+- On Python 3.12, prefer built-in generic types and `X | None` where they make the contract clearer. Use `from __future__ import annotations` only when it avoids a real forward-reference or import-cycle problem; do not add it mechanically.
 - Keep functions focused. Prefer early returns for invalid preconditions and do not silently ignore invalid states.
 - Use the standard library and Django before adding a dependency. A dependency needs explicit approval and a written purpose.
 - Catch only expected exceptions. Do not catch broad `Exception` unless the boundary, safe logging, and recovery behaviour are explicit.
@@ -36,4 +43,4 @@ Use this page with [commenting and code documentation](commenting-and-code-docum
 
 - Prefer small, cohesive, reviewable changes. Update tests and relevant documentation in the same change.
 - Write tests for normal behaviour, denied access, event-year isolation, and meaningful edge cases. Use synthetic data only.
-- Before handoff, run the relevant Django checks, tests, migration check, and `git diff --check` with an explicitly authorised local database configuration.
+- Before handoff, run the relevant Django checks, tests, migration check, and `git diff --check` with an explicitly authorised local database configuration. Do not claim style, type, security, coverage, or dependency checks ran unless the repository actually configures and ran them.

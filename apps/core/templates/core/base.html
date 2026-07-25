@@ -1,0 +1,47 @@
+{% load static %}
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f8fa">
+    <title>{% block title %}{{ page_title }} | Polsk App{% endblock %}</title>
+    <link rel="icon" href="{% static 'core/branding/favicon.ico' %}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'core/branding/favicon-32x32.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'core/branding/apple-touch-icon-180.png' %}">
+    <link rel="manifest" href="{% static 'core/branding/site.webmanifest' %}">
+    <script>
+      (() => { try { document.documentElement.dataset.theme = localStorage.getItem("polsk-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch (_) { document.documentElement.dataset.theme = "light"; } })();
+    </script>
+    <link rel="stylesheet" href="{% static 'core/dist/app.css' %}">
+    <script src="{% static 'core/client-error-reporting.js' %}" defer></script>
+    <script src="{% static 'core/js/theme.js' %}" defer></script>
+    {% if startiapp_brand_name %}
+      <link rel="stylesheet" href="https://cdn.starti.app/c/{{ startiapp_brand_name }}/main.css">
+      <script src="https://cdn.starti.app/c/{{ startiapp_brand_name }}/main.js" defer></script>
+      <script src="{% static 'core/js/startiapp.js' %}" defer></script>
+    {% endif %}
+  </head>
+  <body{% if startiapp_user_id %} data-startiapp-mode="authenticated" data-startiapp-user-id="{{ startiapp_user_id }}" data-startiapp-complete-biometric-save="{% if startiapp_complete_biometric_save %}true{% else %}false{% endif %}" data-startiapp-complete-biometric-save-url="{% url 'accounts:startiapp_biometric_save_completed' %}"{% endif %}>
+    <div class="app-shell">
+      <header class="app-header"><div class="app-header-inner">
+        <a class="brand-link" href="{% url 'core:home' %}"><img src="{% static 'core/branding/polsk-header-40.png' %}" width="40" height="40" alt=""><span>Polsk App</span></a>
+        <nav class="desktop-navigation" aria-label="Hovedmenu">{% for item in navigation_items %}<a class="desktop-navigation-link{% if item.active %} is-active{% endif %}" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.title }}</a>{% endfor %}</nav>
+        <details class="account-menu"><summary aria-label="Åbn kontomenu"><span class="account-avatar" aria-hidden="true">{{ request.user.get_username|slice:':1'|upper }}</span><span class="account-name">{{ request.user.get_username }}</span></summary>
+          <div class="account-menu-panel">
+            <p class="account-menu-heading">Konto</p><p class="account-menu-username">{{ request.user.get_username }}</p><div class="account-menu-divider"></div>
+            <button class="account-menu-button" type="button" data-theme-toggle aria-pressed="false"><span data-theme-toggle-label>Skift tema</span></button>
+            {% if switchable_participants %}
+              <p class="account-menu-heading">Skift til barn i husstanden</p>
+              {% for participant in switchable_participants %}<form method="post" action="{% url 'core:switch_profile' %}">{% csrf_token %}<input type="hidden" name="participant" value="{{ participant.public_id }}"><button class="account-menu-button" type="submit">Skift til {{ participant.display_name }}</button></form>{% endfor %}
+            {% endif %}
+            {% if active_participant and active_participant.login_account_id != request.user.id %}<p class="account-menu-help">Du bruger {{ active_participant.display_name }}s profil.</p>{% endif %}
+            <div class="account-menu-divider"></div><form method="post" action="{% url 'core:logout' %}">{% csrf_token %}<button class="account-menu-button" type="submit">Log ud</button></form>
+          </div>
+        </details>
+      </div></header>
+      <main class="app-main">{% block content %}{% endblock %}</main>
+      <nav class="mobile-navigation" aria-label="Hovedmenu">{% for item in navigation_items %}<a class="mobile-navigation-link{% if item.active %} is-active{% endif %}" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>{% include 'core/_navigation_icon.html' with icon=item.icon %}<span>{{ item.title }}{% if item.key == 'more' and notification_count %} <span class="navigation-badge" aria-label="{{ notification_count }} nye notifikationer">{{ notification_count }}</span>{% endif %}</span></a>{% endfor %}</nav>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+  <section class="placeholder-card" aria-labelledby="page-title">
+    <img class="placeholder-mark" src="{% static 'core/branding/polsk-white-64.png' %}" width="64" height="64" alt="" aria-hidden="true">
+    <p class="eyebrow">Polsk App</p>
+    <h1 id="page-title">{{ placeholder_title }}</h1>
+    <p>{{ placeholder_description }}</p>
+    <p class="placeholder-status"><span aria-hidden="true">●</span> Denne del er under opbygning.</p>
+    {% if placeholder_title == "Mad og indkøb" %}
+      <div class="placeholder-links" aria-label="Mad og indkøb">
+        <a href="{% url 'core:food' %}">Mad <span aria-hidden="true">→</span></a>
+        <a href="{% url 'core:shopping' %}">Indkøb <span aria-hidden="true">→</span></a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

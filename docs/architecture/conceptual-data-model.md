@@ -1,10 +1,10 @@
 # Conceptual data model
 
-**Status: Candidate design. Implementation: Planned.**
+**Status: Candidate design. Implementation: Foundation implemented.**
 
 This is non-binding; final fields and relationships require a feature specification and migration review.
 
-**Account-model prerequisite: Candidate decision.** Before account-domain implementation begins, decide and record whether the default Django user model is sufficient. Do not change user-model strategy implicitly after identity data or dependent migrations exist.
+**Account-model decision: Implemented.** `accounts.User` subclasses Django's `AbstractUser`, retains username/password login, adds a public UUID, and remains distinct from `Participant`.
 
 - **Accounts/people:** User/LoginAccount, Participant, Household, HouseholdMembership, EventParticipation, EventRole, Invitation, active-profile session context.
 - **Events/schedule:** EventSeries, EventYear, venue/location fields, Activity, ActivityAudience, Reminder.
@@ -12,4 +12,4 @@ This is non-binding; final fields and relationships require a feature specificat
 - **Communication:** Channel, ChannelMembership, ChannelSubscription, Message, optional later attachment.
 - **Food/shopping:** Product, ProductUnit, StorageLocation, StockObservation, MissingReport, FoodReservation, DinnerBox/NamedPurpose, ShoppingRequest, ShoppingList, ShoppingListLine, ShoppingExport, optional VendorProductReference.
 - **Weather:** WeatherLocation, ForecastSnapshot, DailyForecast, ObservedWeather.
-- **Notification/audit:** Notification, NotificationDelivery, NotificationPreference, PushSubscription, OutboxEntry, AuditEvent.
+- **Notification:** Notification, NotificationDelivery, and per-account notification state. There is no generic audit model or stored push token.

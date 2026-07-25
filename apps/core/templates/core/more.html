@@ -1,0 +1,22 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+  <section class="more-page" aria-labelledby="page-title">
+    <div class="page-heading">
+      <p class="eyebrow">Polsk App</p>
+      <h1 id="page-title">Mere</h1>
+      <p>Find flere dele af Polsk App, som kommer løbende.</p>
+    </div>
+    <div class="more-grid">
+      {% for title, description, url in more_items %}
+        <a class="more-card" href="{{ url }}">
+          <span>
+            <strong>{{ title }}</strong>
+            <small>{{ description }}</small>
+          </span>
+          <span aria-hidden="true">→</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

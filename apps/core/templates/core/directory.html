@@ -1,0 +1,12 @@
+{% extends 'core/base.html' %}
+{% block content %}
+  <section class="more-page" aria-labelledby="directory-title">
+    <div class="page-heading"><p class="eyebrow">Fællesskabet</p><h1 id="directory-title">Deltagere</h1><p>Oversigt over deltagere i det aktive eventår.</p></div>
+    <div class="more-grid">{% for participation in participants %}<div class="more-card"><span><strong>{{ participation.participant.display_name }}</strong><small>{{ participation.participant.get_age_group_display }}</small></span>{% if can_manage_participants and participation.participant.login_account_id %}<form method="post" action="{% url 'core:reset_credentials' participation.participant.public_id %}">{% csrf_token %}<button class="account-menu-button" type="submit">Nulstil adgang</button></form>{% endif %}</div>{% empty %}<p class="placeholder-status">Der er endnu ingen deltagere.</p>{% endfor %}</div>
+    {% if can_manage_participants %}
+      <div class="account-menu-divider"></div><h2>Tilføj deltager</h2>
+      {% if invitation_url %}<p class="form-error">Kopiér invitationslinket nu: <code>{{ invitation_url }}</code></p>{% endif %}
+      <form method="post" class="login-form">{% csrf_token %}{% for field in form %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}{% endfor %}<button type="submit">Gem deltager</button></form>
+    {% endif %}
+  </section>
+{% endblock %}

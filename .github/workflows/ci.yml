@@ -32,7 +32,13 @@ jobs:
     env:
       DJANGO_DEBUG: "False"
       DJANGO_SECRET_KEY: ci-only-secret
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/polsk_app
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATABASE: polsk_app
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGSSLMODE: disable
+      PGCHANNELBINDING: disable
 
     steps:
       - name: Check out repository
@@ -44,10 +50,30 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build:css
+
+      - name: Test Starti integration bridge
+        run: npm run test:startiapp
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+
+      - name: Check installed dependencies
+        run: python -m pip check
+
+      - name: Compile Python code
+        run: python -m compileall -q config apps
 
       - name: Apply migrations
         run: python manage.py migrate --noinput
@@ -62,4 +88,9 @@ jobs:
         run: python manage.py collectstatic --noinput
 
       - name: Run tests
+        # Django's test client uses HTTP unless a test explicitly requests HTTPS.
+        # Production settings are checked above; test mode keeps view assertions
+        # focused on their intended behaviour rather than the HTTPS redirect.
+        env:
+          DJANGO_DEBUG: "True"
         run: python manage.py test

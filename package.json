@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./frontend/app.css -o ./apps/core/static/core/dist/app.css --minify",
+    "watch:css": "tailwindcss -i ./frontend/app.css -o ./apps/core/static/core/dist/app.css --watch",
+    "test:startiapp": "node --test frontend/tests/startiapp.test.cjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.1",
+    "tailwindcss": "4.3.1"
+  }
+}
