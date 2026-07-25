@@ -8,7 +8,9 @@ For Neon, store only its direct hostname in `PGHOST` (without `-pooler`) and kee
 
 Render Free does not provide Shell access or pre-deploy commands. The `migrate-production` GitHub Actions job therefore runs only after the `django` job succeeds on a push to `main`. Render's `checksPass` trigger waits for that job, so a failed migration prevents deployment of the corresponding commit.
 
-Configure these GitHub secrets in the `production` environment when available, or as repository secrets when the GitHub plan does not provide private-repository environment secrets: `MIGRATION_DJANGO_SECRET_KEY`, `MIGRATION_PGHOST`, `MIGRATION_PGDATABASE`, `MIGRATION_PGUSER`, and `MIGRATION_PGPASSWORD`. `MIGRATION_PGHOST` is Neon’s direct hostname. The migration job supplies TLS, channel-binding, and direct-connection settings itself. It receives no Starti credentials. Restrict workflow changes and `main` pushes through human review; destructive migrations require explicit review before merge.
+Configure these GitHub secrets in the `production` environment when available, or as repository secrets when the GitHub plan does not provide private-repository environment secrets: `MIGRATION_DJANGO_SECRET_KEY`, `MIGRATION_PGHOST`, `MIGRATION_PGDATABASE`, `MIGRATION_PGUSER`, `MIGRATION_PGPASSWORD`, and `KEEPALIVE_SECRET`. Configure `APP_BASE_URL` as a GitHub Actions variable. `MIGRATION_PGHOST` is Neon’s direct hostname. The migration job supplies TLS, channel-binding, and direct-connection settings itself. It receives no Starti credentials. Restrict workflow changes and `main` pushes through human review; destructive migrations require explicit review before merge.
+
+Before using its direct connection, the job calls the existing protected keepalive endpoint to wake a suspended Neon database. The deployed web service must already exist for that preflight; initial provisioning remains a human-run operation.
 
 Run `createsuperuser` and `bootstrap_event_admin` only once, manually and with a human-authorised direct Neon connection. They are not deployment jobs.
 

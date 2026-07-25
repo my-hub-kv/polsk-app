@@ -1,56 +1,31 @@
+"""Emergency Admin registrations without Polsk-specific CRUD restrictions."""
+
 from django.contrib import admin
 
 from .models import Notification, NotificationDelivery, NotificationState
 
 
-class ReadOnlyAdmin(admin.ModelAdmin):
-    """Keep Django Admin from bypassing notification service invariants."""
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
 @admin.register(Notification)
-class NotificationAdmin(ReadOnlyAdmin):
-    """Inspect delivered in-app notices without creating new queue entries."""
+class NotificationAdmin(admin.ModelAdmin):
+    """Manage notifications through standard Django Admin."""
 
     list_display = ("created_at", "event_year", "recipient", "title", "destination_path")
     list_filter = ("event_year", "created_at")
     search_fields = ("recipient__username", "title")
     list_select_related = ("event_year", "recipient")
     ordering = ("-created_at",)
-    readonly_fields = (
-        "public_id",
-        "event_year",
-        "recipient",
-        "title",
-        "body",
-        "destination_path",
-        "idempotency_key",
-        "created_at",
-    )
-
-
+    date_hierarchy = "created_at"
 @admin.register(NotificationState)
-class NotificationStateAdmin(ReadOnlyAdmin):
-    """Inspect inbox read boundaries without changing participant state."""
+class NotificationStateAdmin(admin.ModelAdmin):
+    """Manage notification read state through standard Django Admin."""
 
     list_display = ("event_year", "recipient", "last_opened_at")
     list_filter = ("event_year",)
     search_fields = ("recipient__username",)
     list_select_related = ("event_year", "recipient")
-    readonly_fields = ("event_year", "recipient", "last_opened_at")
-
-
 @admin.register(NotificationDelivery)
-class NotificationDeliveryAdmin(ReadOnlyAdmin):
-    """Inspect provider-delivery progress without bypassing the dispatcher."""
+class NotificationDeliveryAdmin(admin.ModelAdmin):
+    """Manage notification delivery records through standard Django Admin."""
 
     list_display = (
         "notification",
@@ -63,15 +38,5 @@ class NotificationDeliveryAdmin(ReadOnlyAdmin):
     )
     list_filter = ("provider", "status")
     search_fields = ("notification__recipient__username", "notification__title")
-    list_select_related = ("notification",)
+    list_select_related = ("notification__recipient",)
     ordering = ("-available_at",)
-    readonly_fields = (
-        "notification",
-        "provider",
-        "status",
-        "attempts",
-        "available_at",
-        "claimed_at",
-        "sent_at",
-        "error_code",
-    )

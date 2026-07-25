@@ -53,6 +53,8 @@ class User(AbstractUser):
     objects = PolskUserManager()
 
     class Meta:
+        verbose_name = "bruger"
+        verbose_name_plural = "brugere"
         constraints = [
             models.UniqueConstraint(
                 Lower("username"), name="accounts_user_username_ci_unique"
@@ -79,13 +81,20 @@ class LoginThrottle(models.Model):
     locked_until = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "loginbeskyttelse"
+        verbose_name_plural = "loginbeskyttelser"
+
+    def __str__(self) -> str:
+        return f"Loginbeskyttelse #{self.pk}"
+
 
 class Invitation(models.Model):
     """Single-use credential setup or reset link stored only as a digest."""
 
     class Purpose(models.TextChoices):
-        CREATE_ACCOUNT = "create_account", "Create account"
-        RESET_CREDENTIALS = "reset_credentials", "Reset credentials"
+        CREATE_ACCOUNT = "create_account", "Opret konto"
+        RESET_CREDENTIALS = "reset_credentials", "Nulstil adgangskode"
 
     participation = models.ForeignKey(
         "people.EventParticipation",
@@ -100,7 +109,12 @@ class Invitation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        verbose_name = "invitation"
+        verbose_name_plural = "invitationer"
         indexes = [models.Index(fields=["expires_at", "used_at", "revoked_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.participation} — {self.get_purpose_display()}"
 
 
 class InvitationThrottle(models.Model):
@@ -111,3 +125,10 @@ class InvitationThrottle(models.Model):
     failures = models.PositiveSmallIntegerField(default=0)
     locked_until = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "invitationsbeskyttelse"
+        verbose_name_plural = "invitationsbeskyttelser"
+
+    def __str__(self) -> str:
+        return f"Invitationsbeskyttelse #{self.pk}"

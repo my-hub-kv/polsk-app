@@ -1,3 +1,5 @@
+"""Emergency Admin registrations without Polsk-specific CRUD restrictions."""
+
 from django.contrib import admin
 
 from .models import (
@@ -11,34 +13,28 @@ from .models import (
 
 @admin.register(Participant)
 class ParticipantAdmin(admin.ModelAdmin):
-    """Inspect durable person profiles without coupling them to login accounts."""
+    """Manage durable person profiles through standard Django Admin."""
 
     list_display = ("display_name", "age_group", "login_account")
     list_filter = ("age_group",)
     search_fields = ("display_name", "login_account__username")
     list_select_related = ("login_account",)
-    readonly_fields = ("public_id",)
-
-    def has_delete_permission(self, request, obj=None):
-        return False
+    autocomplete_fields = ("login_account",)
 
 
 @admin.register(EventParticipation)
 class EventParticipationAdmin(admin.ModelAdmin):
-    """Maintain event membership with searchable event and participant context."""
+    """Manage event memberships through standard Django Admin."""
 
     list_display = ("event_year", "participant")
     list_filter = ("event_year",)
     search_fields = ("event_year__name", "participant__display_name")
     list_select_related = ("event_year", "participant")
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
+    autocomplete_fields = ("event_year", "participant")
 
 @admin.register(EventRoleAssignment)
 class EventRoleAssignmentAdmin(admin.ModelAdmin):
-    """Manage additive roles through their explicitly event-scoped participation."""
+    """Manage additive roles through standard Django Admin."""
 
     list_display = ("participation", "role")
     list_filter = ("role", "participation__event_year")
@@ -47,24 +43,22 @@ class EventRoleAssignmentAdmin(admin.ModelAdmin):
         "participation__participant__display_name",
     )
     list_select_related = ("participation__event_year", "participation__participant")
+    autocomplete_fields = ("participation",)
 
 
 @admin.register(Household)
 class HouseholdAdmin(admin.ModelAdmin):
-    """Inspect households within their annual event boundary."""
+    """Manage households through standard Django Admin."""
 
     list_display = ("name", "event_year")
     list_filter = ("event_year",)
     search_fields = ("name", "event_year__name")
     list_select_related = ("event_year",)
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
+    autocomplete_fields = ("event_year",)
 
 @admin.register(HouseholdMembership)
 class HouseholdMembershipAdmin(admin.ModelAdmin):
-    """Keep emergency admin from bypassing the event-consistent service boundary."""
+    """Manage household memberships through standard Django Admin."""
 
     list_display = ("household", "participation")
     list_filter = ("household__event_year",)
@@ -72,14 +66,8 @@ class HouseholdMembershipAdmin(admin.ModelAdmin):
         "household__name",
         "participation__participant__display_name",
     )
-    list_select_related = ("household", "participation")
-    readonly_fields = ("household", "participation")
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
+    list_select_related = (
+        "household__event_year",
+        "participation__event_year",
+        "participation__participant",
+    )
