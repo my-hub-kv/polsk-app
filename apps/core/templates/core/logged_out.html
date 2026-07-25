@@ -1,0 +1,28 @@
+{% load static %}
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f8fa">
+    <title>Logget ud | Polsk App</title>
+    <link rel="stylesheet" href="{% static 'core/dist/app.css' %}">
+    <script>(() => { try { document.documentElement.dataset.theme = localStorage.getItem("polsk-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch (_) {} })();</script>
+    <script src="{% static 'core/client-error-reporting.js' %}" defer></script>
+    {% if startiapp_brand_name %}
+      <link rel="stylesheet" href="https://cdn.starti.app/c/{{ startiapp_brand_name }}/main.css">
+      <script src="https://cdn.starti.app/c/{{ startiapp_brand_name }}/main.js" defer></script>
+      <script src="{% static 'core/js/startiapp.js' %}" defer></script>
+    {% endif %}
+  </head>
+  <body class="login-page" data-startiapp-mode="logout">
+    <main class="login-shell">
+      <section class="login-card">
+        <p class="eyebrow">Polsk App</p>
+        <h1>Du er logget ud</h1>
+        <p class="login-intro">Vi har afsluttet din session på denne enhed.</p>
+        <a class="account-menu-button" href="{% url 'core:login' %}">Log ind igen</a>
+      </section>
+    </main>
+  </body>
+</html>

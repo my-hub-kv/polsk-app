@@ -2,7 +2,7 @@
 
 Authentication account and active participant are distinct. Every protected query scopes to event-year membership and object ownership/membership before rendering or mutation. Roles grant capabilities, but channel membership, household switching, and object-level checks remain necessary. Templates may hide unavailable controls but never enforce security.
 
-Use safe defaults, scoped QuerySets/selectors, explicit mutation authorization, CSRF-protected sessions, safe redirects, and explicit/audited administrator overrides. Derive event year, acting account, active participant, and permissions from trusted server-side state; hidden fields, URL/query values, JSON IDs, and form choices must be scoped and authorized before use. Deletion has separate authorization and impact rules. Implement login/invitation rate limiting when those flows are built.
+Use safe defaults, scoped QuerySets/selectors, explicit mutation authorization, CSRF-protected sessions, safe redirects, and explicit administrator overrides where future domain rules allow them. Derive event year, acting account, active participant, and permissions from trusted server-side state; hidden fields, URL/query values, JSON IDs, and form choices must be scoped and authorized before use. Deletion has separate authorization and impact rules. Implement login/invitation rate limiting when those flows are built.
 
 ## Review checklist
 

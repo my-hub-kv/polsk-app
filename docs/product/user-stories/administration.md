@@ -32,7 +32,7 @@ Django admin remains an emergency backend; deletion previews impact where practi
 
 ### Authorization
 
-High-impact actions are limited and audited.
+High-impact actions are limited, server-authorized, and use focused provenance where future domain history requires it.
 
 ### Important edge cases
 

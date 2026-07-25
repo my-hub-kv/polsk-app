@@ -1,0 +1,45 @@
+{% load static %}
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f8fa">
+    <title>Log ind | Polsk App</title>
+    <link rel="icon" href="{% static 'core/branding/favicon.ico' %}" sizes="any">
+    <link rel="stylesheet" href="{% static 'core/dist/app.css' %}">
+    <script>(() => { try { document.documentElement.dataset.theme = localStorage.getItem("polsk-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch (_) {} })();</script>
+    <script src="{% static 'core/client-error-reporting.js' %}" defer></script>
+    {% if startiapp_brand_name %}
+      <link rel="stylesheet" href="https://cdn.starti.app/c/{{ startiapp_brand_name }}/main.css">
+      <script src="https://cdn.starti.app/c/{{ startiapp_brand_name }}/main.js" defer></script>
+      <script src="{% static 'core/js/startiapp.js' %}" defer></script>
+    {% endif %}
+  </head>
+  <body class="login-page" data-startiapp-mode="login" data-startiapp-username-selector="#id_username" data-startiapp-password-selector="#id_password" data-startiapp-submit-selector="#login-button">
+    <main class="login-shell">
+      <section class="login-card" aria-labelledby="login-title">
+        <img src="{% static 'core/branding/polsk-header-64.png' %}" width="64" height="64" alt="Polsk App">
+        <p class="eyebrow">Velkommen til</p>
+        <h1 id="login-title">Polsk App</h1>
+        <p class="login-intro">Log ind for at følge med i årets event.</p>
+        {% if login_rate_limited %}
+          <p class="form-error" role="alert">For mange forsøg. Prøv igen om få minutter.</p>
+        {% elif form.errors %}
+          <p class="form-error" role="alert">Brugernavn eller adgangskode er forkert.</p>
+        {% endif %}
+        <form method="post" class="login-form" data-startiapp-login-form>
+          {% csrf_token %}
+          <label for="id_username">Brugernavn</label>
+          <input id="id_username" name="username" type="text" autocomplete="username" required autofocus>
+          <label for="id_password">Adgangskode</label>
+          <input id="id_password" name="password" type="password" autocomplete="current-password" required>
+          {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+          <input type="hidden" name="startiapp_credential_capture_armed" value="0" data-startiapp-capture-armed>
+          <button id="login-button" type="submit">Log ind</button>
+          <button class="account-menu-button" type="button" data-startiapp-biometric-login hidden>Log ind med biometri</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

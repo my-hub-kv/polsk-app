@@ -1,0 +1,27 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+  <section class="more-page" aria-labelledby="notifications-title">
+    <div class="page-heading">
+      <p class="eyebrow">Opdateringer</p>
+      <h1 id="notifications-title">Notifikationer</h1>
+      <p>Her ser du dine relevante opdateringer for {% if active_event_year %}{{ active_event_year.name }}{% else %}eventet{% endif %}.</p>
+    </div>
+    <div class="more-grid">
+      {% for notification in notifications %}
+        <a class="more-card" href="{{ notification.destination_path }}">
+          <span><strong>{{ notification.title }}</strong><small>{{ notification.body }}</small></span>
+          <span aria-hidden="true">›</span>
+        </a>
+      {% empty %}
+        <p class="placeholder-status"><span aria-hidden="true">●</span> Du har ingen notifikationer lige nu.</p>
+      {% endfor %}
+    </div>
+    {% if startiapp_brand_name %}
+      <button class="account-menu-button" type="button" data-startiapp-push-enable>Aktivér pushnotifikationer</button>
+      <p class="account-menu-help" data-startiapp-push-status>Du kan altid ændre tilladelsen i din enheds indstillinger.</p>
+    {% endif %}
+  </section>
+  <script src="{% static 'core/js/notification-center.js' %}" defer></script>
+{% endblock %}

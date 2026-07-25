@@ -6,6 +6,7 @@ services:
     region: frankfurt
     branch: main
     buildCommand: bash build.sh
+    preDeployCommand: POLSK_DATABASE_CONNECTION_MODE=direct python manage.py migrate --noinput
     startCommand: >-
       python -m gunicorn config.wsgi:application
       --bind 0.0.0.0:$PORT
@@ -15,15 +16,19 @@ services:
     healthCheckPath: /health/
     autoDeployTrigger: checksPass
     envVars:
-      - key: DJANGO_DEBUG
-        value: "False"
-      - key: DJANGO_SECRET_KEY
-        generateValue: true
-      - key: DATABASE_URL
-        sync: false
+      - fromGroup: polsk-app-runtime
       - key: KEEPALIVE_SECRET
         sync: false
-      - key: APP_HOST
-        sync: false
-      - key: APP_ORIGIN
-        sync: false
+  - type: cron
+    name: polsk-app-notification-delivery
+    runtime: python
+    plan: starter
+    region: frankfurt
+    branch: main
+    schedule: "*/5 * * * *"
+    buildCommand: bash build.sh
+    startCommand: >-
+      python manage.py deliver_notifications &&
+      python manage.py cleanup_throttle_state
+    envVars:
+      - fromGroup: polsk-app-runtime

@@ -13,6 +13,6 @@ Event-year roles are additive and may change between years. The matrix is a star
 | Create official/private channels | No | No | No | Yes | No |
 | Verify inventory, edit list, export CSV | No | Food coordinator | Yes | Yes | No |
 | Manage users or delete participant | No | No | No | Yes | No |
-| Switch into child profile | Same-household adult only | Same | Same | Explicit/audited | N/A |
+| Switch into child profile | Same-household adult only | Same | Same | Same-household adult only | N/A |
 
-Administrator, Event organizer, Chore coordinator, Food coordinator, Adult participant, and Teen participant are roles. Private-channel membership and object ownership are additional checks, not role substitutes.
+Administrator, Event organizer, Chore coordinator, Food coordinator, Adult participant, and Teen participant are roles. Private-channel membership and object ownership are additional checks, not role substitutes. No administrator cross-household profile switching is available.

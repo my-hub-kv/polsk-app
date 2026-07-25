@@ -52,7 +52,7 @@ python -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Configure `.env` with safe local development values and an authorised development `DATABASE_URL`, then run:
+Configure `.env` with safe local development PostgreSQL components (`PGHOST`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`), then run:
 
 ```powershell
 python manage.py migrate

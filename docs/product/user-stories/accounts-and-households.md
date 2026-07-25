@@ -10,6 +10,8 @@ As an invited adult, I want to join through an invitation link or QR code and se
 
 Invitation email is optional; an administrator can reset credentials; a child can later receive independent credentials without a new profile or lost history.
 
+Participant onboarding leaves the optional credential invitation unchecked for every age group. An administrator may deliberately issue one for a participant in any age group.
+
 ### Authorization
 
 Only a valid, unexpired, single-use invitation may create or link access.
@@ -32,11 +34,11 @@ Phone and dietary-information visibility is disclosed before saving; the switche
 
 ### Authorization
 
-Cross-household switching is denied unless explicit, audited administrator authority applies.
+Cross-household switching is always denied. Administrators cannot switch into another profile.
 
 ### Important edge cases
 
-All mutations retain both acting account and active participant.
+Future mutable domain records retain focused acting-account and active-participant provenance when history is needed.
 
 ### Out of scope
 

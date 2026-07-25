@@ -32,7 +32,13 @@ jobs:
     env:
       DJANGO_DEBUG: "False"
       DJANGO_SECRET_KEY: ci-only-secret
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/polsk_app
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATABASE: polsk_app
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGSSLMODE: disable
+      PGCHANNELBINDING: disable
 
     steps:
       - name: Check out repository
@@ -43,6 +49,20 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build:css
+
+      - name: Test Starti integration bridge
+        run: npm run test:startiapp
 
       - name: Install dependencies
         run: |

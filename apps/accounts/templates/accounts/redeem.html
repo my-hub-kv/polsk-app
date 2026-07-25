@@ -1,0 +1,30 @@
+{% load static %}
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Opret adgang | Polsk App</title>
+    <link rel="stylesheet" href="{% static 'core/dist/app.css' %}">
+  </head>
+  <body class="login-page">
+    <main class="login-shell">
+      <section class="login-card" aria-labelledby="redeem-title">
+        <p class="eyebrow">Polsk App</p>
+        <h1 id="redeem-title">Opret adgang</h1>
+        <p class="login-intro">Vælg dit brugernavn og din adgangskode.</p>
+        {% if form.non_field_errors %}<p class="form-error" role="alert">{{ form.non_field_errors|striptags }}</p>{% endif %}
+        <form method="post" class="login-form">
+          {% csrf_token %}
+          {% for field in form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<p class="form-error" role="alert">{{ error }}</p>{% endfor %}
+          {% endfor %}
+          <button type="submit">Gem adgang</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
