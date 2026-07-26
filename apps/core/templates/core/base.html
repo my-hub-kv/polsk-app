@@ -30,7 +30,7 @@
           <a class="brand-link" href="{% url 'core:home' %}"><img src="{% static 'core/branding/polsk-header-40.png' %}" width="40" height="40" alt=""><span>Polsk App</span></a>
           <nav class="desktop-navigation" data-shell-navigation aria-label="Hovedmenu">{% for item in navigation_items %}<a class="desktop-navigation-link{% if item.active %} is-active{% endif %}" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.title }}</a>{% endfor %}</nav>
           <details class="account-menu desktop-account-menu">
-            <summary aria-label="Åbn kontomenu"><span class="account-avatar" aria-hidden="true">{{ request.user.get_username|slice:':1'|upper }}</span><span class="account-name">{{ request.user.get_username }}</span></summary>
+            <summary aria-label="Åbn kontomenu"><span class="account-avatar" aria-hidden="true">{{ request.user.get_username|slice:':1'|upper }}</span><span class="account-name">{{ request.user.get_username|title }}</span></summary>
             <div class="account-menu-panel">{% include 'core/_account_menu_content.html' %}</div>
           </details>
           <button class="mobile-account-trigger" type="button" data-mobile-shell-menu-open aria-controls="mobile-shell-menu" aria-expanded="false" aria-label="Åbn menu"><span class="account-avatar" aria-hidden="true">{{ request.user.get_username|slice:':1'|upper }}</span></button>

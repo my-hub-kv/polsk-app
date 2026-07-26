@@ -1,5 +1,5 @@
 <p class="account-menu-heading">Konto</p>
-<p class="account-menu-username">{{ request.user.get_username }}</p>
+<p class="account-menu-username">{{ request.user.get_username|title }}</p>
 <div class="account-menu-divider"></div>
 <button class="account-menu-button" type="button" data-theme-toggle aria-pressed="false"><span data-theme-toggle-label>Skift tema</span></button>
 {% if switchable_participants %}
