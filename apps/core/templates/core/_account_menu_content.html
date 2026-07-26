@@ -1,0 +1,13 @@
+<p class="account-menu-heading">Konto</p>
+<p class="account-menu-username">{{ request.user.get_username }}</p>
+<div class="account-menu-divider"></div>
+<button class="account-menu-button" type="button" data-theme-toggle aria-pressed="false"><span data-theme-toggle-label>Skift tema</span></button>
+{% if switchable_participants %}
+  <p class="account-menu-heading">Skift til barn i husstanden</p>
+  {% for participant in switchable_participants %}
+    <form method="post" action="{% url 'core:switch_profile' %}">{% csrf_token %}<input type="hidden" name="participant" value="{{ participant.public_id }}"><button class="account-menu-button" type="submit">Skift til {{ participant.display_name }}</button></form>
+  {% endfor %}
+{% endif %}
+{% if active_participant and active_participant.login_account_id != request.user.id %}<p class="account-menu-help">Du bruger {{ active_participant.display_name }}s profil.</p>{% endif %}
+<div class="account-menu-divider"></div>
+<form method="post" action="{% url 'core:logout' %}">{% csrf_token %}<button class="account-menu-button" type="submit">Log ud</button></form>

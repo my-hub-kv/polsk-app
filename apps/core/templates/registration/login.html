@@ -7,7 +7,6 @@
     <meta name="theme-color" content="#101828">
     <title>Log ind | Polsk App</title>
     <link rel="icon" href="{% static 'core/branding/favicon.ico' %}" sizes="any">
-    <link rel="stylesheet" href="{% static 'core/dist/app.css' %}">
     <script>(() => { try { document.documentElement.dataset.theme = localStorage.getItem("polsk-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch (_) {} })();</script>
     <script src="{% static 'core/client-error-reporting.js' %}" defer></script>
     {% if startiapp_brand_name %}
@@ -15,6 +14,7 @@
       <script src="https://cdn.starti.app/c/{{ startiapp_brand_name }}/main.js" defer></script>
       <script src="{% static 'core/js/startiapp.js' %}" defer></script>
     {% endif %}
+    <link rel="stylesheet" href="{% static 'core/dist/app.css' %}">
   </head>
   <body class="login-page" data-startiapp-mode="login" data-startiapp-username-selector="#id_username" data-startiapp-password-selector="#id_password" data-startiapp-submit-selector="#login-button">
     <main class="login-shell">

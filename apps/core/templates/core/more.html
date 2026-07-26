@@ -1,15 +1,15 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-  <section class="more-page" aria-labelledby="page-title">
+  <section class="more-page menu-page" aria-labelledby="page-title">
     <div class="page-heading">
       <p class="eyebrow">Polsk App</p>
       <h1 id="page-title">Mere</h1>
-      <p>Find deltageroversigten, dine notifikationer og andre dele af Polsk App.</p>
+      <p>Find flere dele af Polsk App.</p>
     </div>
-    <div class="more-grid">
+    <nav class="menu-list" aria-label="Flere funktioner">
       {% for item in more_items %}
-        <a class="more-card" href="{{ item.url }}">
+        <a class="menu-list-item" href="{{ item.url }}">
           <span>
             <strong>{{ item.title }}</strong>
             <small>{{ item.description }}</small>
@@ -17,6 +17,6 @@
           <span aria-hidden="true">→</span>
         </a>
       {% endfor %}
-    </div>
+    </nav>
   </section>
 {% endblock %}
