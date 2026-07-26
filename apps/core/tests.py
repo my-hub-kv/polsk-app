@@ -37,6 +37,24 @@ class AuthenticationShellTests(TestCase):
         )
         self.assertRedirects(response, reverse("core:home"))
 
+    def test_shell_includes_the_mobile_full_screen_menu_contract(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, "core/js/shell.js")
+        self.assertContains(response, "data-mobile-shell-menu-open")
+        self.assertContains(response, "data-mobile-shell-menu-modal")
+        self.assertContains(response, "data-shell-navigation")
+
+    def test_more_uses_a_full_page_menu_list(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:more"))
+
+        self.assertContains(response, 'class="more-page menu-page"')
+        self.assertContains(response, 'class="menu-list"')
+
     def test_normal_participant_sees_only_published_navigation(self) -> None:
         self.client.force_login(self.user)
 

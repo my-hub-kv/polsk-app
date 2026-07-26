@@ -10,6 +10,8 @@ The participant release surface is defined in a versioned code registry. The ini
 
 Use the supplied campfire mark as the Polsk logo. The shared interface has an accessible, blue-led light and dark theme with a warm orange accent, uses the browser colour preference by default, and offers a presentation-only user choice. The theme must use text, icons, or borders in addition to colour to communicate state. Ordinary administration belongs in the same role-aware UI; Django Admin remains an unlinked emergency backend.
 
+The participant shell is mobile-first and app-like: mobile content uses the full screen width without an outer card or gutter; the fixed bottom navigation respects the device safe area and immediately marks a newly selected destination while the server-rendered page loads. The sticky header sits above the navigation, and the account control opens a full-screen mobile menu above both. On desktop, primary navigation remains a pill row and account controls use a compact menu. These layers use deliberate stacking order so menus cannot appear behind the header or bottom navigation.
+
 In the native app, Starti provides safe-area inset values and the shared shell applies them to the header, login screen, content, and mobile navigation. The native top and bottom safe areas follow the selected presentation theme: light uses a light background with dark system text and icons, while dark uses dark blue-grey with light system text and icons. This updates immediately when the participant changes theme.
 
 The notification center's “Aktivér pushnotifikationer” control is hidden by default and appears only after the Starti bridge confirms that the page runs in the native app. It is not shown in a browser.
