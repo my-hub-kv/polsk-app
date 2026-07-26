@@ -1,14 +1,10 @@
 from datetime import timedelta
-from queue import Queue
-from threading import Barrier, Thread
 from urllib.error import URLError
-from unittest import skipUnless
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.db import close_old_connections, connection
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps.events.models import EventYear
@@ -365,6 +361,44 @@ class RequestTriggeredDeliveryTests(TestCase):
         self.assertEqual(NotificationDelivery.objects.count(), 1)
         thread.assert_called_once()
 
+    @patch("apps.notifications.services.Thread")
+    def test_batch_enqueue_handles_a_stale_idempotency_lookup(self, thread) -> None:
+        """The database constraint resolves a race after an outdated pre-check."""
+        kwargs = {
+            "event_year_id": self.event.pk,
+            "recipient_ids": [self.user.pk],
+            "title": "FÃ¦lles opdatering",
+            "body": "Indhold",
+            "destination_path": "/",
+            "idempotency_key": "stale-idempotency-lookup",
+        }
+
+        with self.captureOnCommitCallbacks(execute=True):
+            created = enqueue_notifications(**kwargs)
+
+        original_filter = Notification.objects.filter
+
+        def hide_existing_notification(*args: object, **filter_kwargs: object):
+            queryset = original_filter(*args, **filter_kwargs)
+            if filter_kwargs.get("idempotency_key") == kwargs["idempotency_key"]:
+                return queryset.none()
+            return queryset
+
+        with patch.object(
+            Notification.objects,
+            "filter",
+            side_effect=hide_existing_notification,
+        ):
+            with self.captureOnCommitCallbacks(execute=True):
+                raced = enqueue_notifications(**kwargs)
+
+        self.assertEqual(len(created), 1)
+        self.assertEqual(len(raced), 1)
+        self.assertEqual(raced[0].pk, created[0].pk)
+        self.assertEqual(Notification.objects.count(), 1)
+        self.assertEqual(NotificationDelivery.objects.count(), 1)
+        thread.assert_called_once()
+
     @patch("apps.notifications.services.send_notification")
     def test_dispatcher_drains_all_45_due_deliveries(self, send_notification) -> None:
         recipients = [self.user] + [
@@ -448,75 +482,3 @@ class RequestTriggeredDeliveryTests(TestCase):
         )
         with services._request_dispatch_state_lock:
             self.assertFalse(services._request_dispatch_running)
-
-
-@skipUnless(connection.vendor == "postgresql", "Requires PostgreSQL row-conflict handling")
-@override_settings(
-    STARTIAPP_BRAND_NAME="test-brand",
-    STARTIAPP_API_KEY="test-key",
-    APP_ORIGIN="https://example.test",
-    NOTIFICATION_DELIVERY_SYNCHRONOUS=False,
-    NOTIFICATION_DELIVERY_REQUEST_TRIGGERED=False,
-)
-class NotificationBatchConcurrencyTests(TransactionTestCase):
-    """Prove batch idempotency when two database connections race."""
-
-    def setUp(self) -> None:
-        self.event = EventYear.objects.create(
-            name="Polsk 2026",
-            year=2026,
-            starts_on="2026-07-01",
-            ends_on="2026-07-05",
-        )
-        self.user = get_user_model().objects.create(username="race-recipient")
-        participant = Participant.objects.create(
-            display_name="Race recipient",
-            age_group=Participant.AgeGroup.ADULT,
-            login_account=self.user,
-        )
-        EventParticipation.objects.create(event_year=self.event, participant=participant)
-
-    def test_concurrent_batch_enqueue_keeps_one_notification(self) -> None:
-        insert_barrier = Barrier(2)
-        outcomes: Queue[object] = Queue()
-        original_bulk_create = Notification.objects.bulk_create
-
-        def synchronize_notification_insert(*args: object, **kwargs: object):
-            insert_barrier.wait(timeout=10)
-            return original_bulk_create(*args, **kwargs)
-
-        def enqueue() -> None:
-            close_old_connections()
-            try:
-                enqueue_notifications(
-                    event_year_id=self.event.pk,
-                    recipient_ids=[self.user.pk],
-                    title="Samtidig opdatering",
-                    body="Indhold",
-                    destination_path="/",
-                    idempotency_key="concurrent-batch",
-                )
-            except Exception as error:  # Report thread failures to the test process.
-                outcomes.put(error)
-            else:
-                outcomes.put("ok")
-            finally:
-                close_old_connections()
-
-        with patch.object(
-            Notification.objects,
-            "bulk_create",
-            side_effect=synchronize_notification_insert,
-        ):
-            first = Thread(target=enqueue)
-            second = Thread(target=enqueue)
-            first.start()
-            second.start()
-            first.join(timeout=15)
-            second.join(timeout=15)
-
-        self.assertFalse(first.is_alive())
-        self.assertFalse(second.is_alive())
-        self.assertEqual([outcomes.get_nowait(), outcomes.get_nowait()], ["ok", "ok"])
-        self.assertEqual(Notification.objects.count(), 1)
-        self.assertEqual(NotificationDelivery.objects.count(), 1)
