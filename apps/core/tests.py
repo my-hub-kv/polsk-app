@@ -43,6 +43,25 @@ class AuthenticationShellTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "cdn.starti.app")
 
+    @override_settings(STARTIAPP_BRAND_NAME="test-brand")
+    def test_authenticated_shell_includes_starti_credit_link(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, 'href="https://starti.app/"')
+        self.assertContains(response, "data-startiapp-credit")
+        self.assertContains(response, "hidden")
+        self.assertContains(response, "Powered by")
+
+    @override_settings(STARTIAPP_BRAND_NAME="")
+    def test_authenticated_shell_omits_starti_credit_without_starti(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertNotContains(response, "startiapp-credit")
+
     def test_login_normalizes_username_case(self) -> None:
         response = self.client.post(
             reverse("core:login"),

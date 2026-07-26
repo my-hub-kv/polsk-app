@@ -4,6 +4,8 @@
   const body = document.body;
   const INITIALIZATION_TIMEOUT_MS = 5_000;
   const READY_FALLBACK_MS = 250;
+  const LIGHT_SYSTEM_BAR_COLOR = "#f7f8fa";
+  const DARK_SYSTEM_BAR_COLOR = "#101828";
   let initializationPromise;
   let nativeInitializationPromise;
   let nativeInitialized = false;
@@ -40,16 +42,64 @@
     document.dispatchEvent(new Event("startiapp:initialized"));
   }
 
+  function currentThemeIsDark() {
+    return document.documentElement.dataset.theme === "dark";
+  }
+
+  function nativeChromeOptions() {
+    const isDark = currentThemeIsDark();
+    return {
+      darkContent: !isDark,
+      safeAreaColor: isDark ? DARK_SYSTEM_BAR_COLOR : LIGHT_SYSTEM_BAR_COLOR,
+    };
+  }
+
+  function initializeOptions() {
+    // Starti exposes the native insets as --startiapp-inset-* when the safe
+    // areas are removed. The shared shell then owns the matching padding,
+    // which keeps the header and bottom navigation clear of device chrome.
+    const chrome = nativeChromeOptions();
+    return {
+      statusBar: {
+        removeSafeArea: true,
+        hideText: false,
+        darkContent: chrome.darkContent,
+      },
+    };
+  }
+
+  function configureNativeChrome(sdk) {
+    document.documentElement.dataset.startiappNative = "true";
+
+    const app = sdk && sdk.App;
+    if (!app) return;
+    const chrome = nativeChromeOptions();
+
+    // Starti merges runtime status-bar updates. Match both the safe-area
+    // background and icon contrast to the current presentation theme.
+    try {
+      if (typeof app.setStatusBar === "function") {
+        app.setStatusBar({ darkContent: chrome.darkContent });
+      }
+    } catch (_) {}
+    try {
+      if (typeof app.setSafeAreaBackgroundColor === "function") {
+        Promise.resolve(app.setSafeAreaBackgroundColor(chrome.safeAreaColor)).catch(() => {});
+      }
+    } catch (_) {}
+  }
+
   function attemptNativeInitialization(sdk) {
     if (nativeInitialized) return Promise.resolve(sdk);
     if (nativeInitializationPromise) return nativeInitializationPromise;
 
     nativeInitializationPromise = withTimeout(
-      Promise.resolve().then(() => sdk.initialize()),
+      Promise.resolve().then(() => sdk.initialize(initializeOptions())),
       "StartiApp initialization timed out."
     ).then(() => {
       if (!isRunningInApp(sdk)) return null;
       nativeInitialized = true;
+      configureNativeChrome(sdk);
       notifyNativeInitialized();
       return sdk;
     }).catch(() => null).finally(() => {
@@ -203,6 +253,11 @@
     });
   }
 
+  function showNativeCredit(sdk) {
+    const credit = document.querySelector("[data-startiapp-credit]");
+    if (credit && isRunningInApp(sdk)) credit.hidden = false;
+  }
+
   async function setupLogout(sdk) {
     const biometrics = sdk.Biometrics;
     if (biometrics && typeof biometrics.removeUsernameAndPassword === "function") {
@@ -217,6 +272,7 @@
     if (body.dataset.startiappSetupState === "complete") return;
     body.dataset.startiappSetupState = "complete";
     if (!sdk) return;
+    showNativeCredit(sdk);
     if (body.dataset.startiappMode === "login") setupLogin(sdk);
     if (body.dataset.startiappMode === "authenticated") {
       registerIdentity(sdk);
@@ -229,6 +285,9 @@
   function startSetup() {
     const setupAfterLateReady = () => setupMode(starti());
     document.addEventListener("startiapp:initialized", setupAfterLateReady, { once: true });
+    document.addEventListener("polsk:themechange", () => {
+      if (nativeInitialized) configureNativeChrome(starti());
+    });
     initialize().then((sdk) => {
       if (!sdk) return;
       document.removeEventListener("startiapp:initialized", setupAfterLateReady);

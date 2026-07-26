@@ -18,6 +18,10 @@
     --app-accent: #b54708;
     --app-danger: #b42318;
     --app-shadow: 0 16px 36px rgb(24 34 48 / 0.12);
+    --app-safe-area-top: var(--startiapp-inset-top, 0px);
+    --app-safe-area-right: var(--startiapp-inset-right, 0px);
+    --app-safe-area-bottom: var(--startiapp-inset-bottom, 0px);
+    --app-safe-area-left: var(--startiapp-inset-left, 0px);
   }
 
   :root[data-theme="dark"] {
@@ -70,8 +74,8 @@
 
 @layer components {
   .app-shell { min-height: 100dvh; }
-  .app-header { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid color-mix(in srgb, var(--app-line) 82%, transparent); background: color-mix(in srgb, var(--app-background) 92%, transparent); backdrop-filter: blur(18px); }
-  .app-header-inner { display: flex; min-height: 4.5rem; max-width: 76rem; align-items: center; justify-content: space-between; gap: 1rem; margin: 0 auto; padding: 0.75rem 1rem; }
+  .app-header { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid color-mix(in srgb, var(--app-line) 82%, transparent); background: color-mix(in srgb, var(--app-background) 92%, transparent); padding-top: var(--app-safe-area-top); backdrop-filter: blur(18px); }
+  .app-header-inner { display: flex; min-height: 4.5rem; max-width: 76rem; align-items: center; justify-content: space-between; gap: 1rem; margin: 0 auto; padding: 0.75rem calc(1rem + var(--app-safe-area-right)) 0.75rem calc(1rem + var(--app-safe-area-left)); }
   .brand-link { display: inline-flex; min-width: 0; align-items: center; gap: 0.625rem; font-size: 1.0625rem; font-weight: 750; text-decoration: none; }
   .brand-link img { border-radius: 0.75rem; box-shadow: 0 4px 10px rgb(0 0 0 / 0.16); }
   .desktop-navigation { display: none; }
@@ -91,7 +95,7 @@
   .account-menu-button:hover:not(:disabled) { background: var(--app-surface-muted); }
   .account-menu-button:disabled { color: var(--app-muted); cursor: not-allowed; }
   .account-menu-help { padding: 0 0.5rem 0.4rem; color: var(--app-muted); font-size: 0.78rem; }
-  .app-main { width: min(100% - 2rem, 68rem); margin: 0 auto; padding: 2rem 0 calc(6.75rem + env(safe-area-inset-bottom)); }
+  .app-main { width: min(100% - 2rem, 68rem); margin: 0 auto; padding: 2rem 0 calc(6.75rem + var(--app-safe-area-bottom)); }
   .placeholder-card, .more-page { border: 1px solid var(--app-line); border-radius: 1.25rem; background: var(--app-surface); box-shadow: var(--app-shadow); }
   .placeholder-card { display: grid; justify-items: start; gap: 0.75rem; padding: clamp(1.5rem, 5vw, 3rem); }
   .placeholder-mark { border-radius: 1rem; background: #1d2939; padding: 0.75rem; }
@@ -112,13 +116,18 @@
   :root[data-theme="dark"] .operation-button { color: #101828; }
   .operation-message { margin-bottom: 1rem; border: 1px solid var(--app-line); border-radius: 0.65rem; background: var(--app-primary-soft); padding: 0.75rem; color: var(--app-text); }
   .operation-message p { margin: 0; }
-  .mobile-navigation { position: fixed; right: 0; bottom: 0; left: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--app-line); background: color-mix(in srgb, var(--app-surface) 94%, transparent); box-shadow: 0 -8px 24px rgb(24 34 48 / 0.1); padding: 0.35rem max(0.35rem, env(safe-area-inset-right)) max(0.35rem, env(safe-area-inset-bottom)) max(0.35rem, env(safe-area-inset-left)); backdrop-filter: blur(18px); }
+  .mobile-navigation { position: fixed; right: 0; bottom: 0; left: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--app-line); background: color-mix(in srgb, var(--app-surface) 94%, transparent); box-shadow: 0 -8px 24px rgb(24 34 48 / 0.1); padding: 0.35rem max(0.35rem, var(--app-safe-area-right)) max(0.35rem, var(--app-safe-area-bottom)) max(0.35rem, var(--app-safe-area-left)); backdrop-filter: blur(18px); }
   .mobile-navigation-link { display: grid; min-height: 3.75rem; place-items: center; gap: 0.1rem; border-radius: 0.7rem; color: var(--app-muted); font-size: 0.64rem; font-weight: 650; line-height: 1.1; text-align: center; text-decoration: none; }
   .mobile-navigation-link svg { width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
   .mobile-navigation-link.is-active { background: var(--app-primary-soft); color: var(--app-primary-strong); }
   .navigation-badge { display: inline-grid; min-width: 1rem; height: 1rem; place-items: center; border-radius: 999px; background: var(--app-accent); color: #fff; font-size: 0.62rem; }
+  .startiapp-credit { display: flex; justify-content: center; margin-top: clamp(2rem, 8vh, 5rem); }
+  .startiapp-credit a { display: grid; min-width: 9.5rem; justify-items: center; border-radius: 999px; background: #ff9715; box-shadow: 0 5px 12px rgb(181 71 8 / 0.24); padding: 0.48rem 0.9rem 0.56rem; color: #111827; line-height: 1; text-decoration: none; transform: scale(0.75); transform-origin: center; transition: transform 150ms ease, box-shadow 150ms ease; }
+  .startiapp-credit a:hover { box-shadow: 0 8px 16px rgb(181 71 8 / 0.3); transform: scale(0.75) translateY(-2px); }
+  .startiapp-credit-label { font-family: Montserrat, ui-sans-serif, system-ui, sans-serif; font-size: 0.56rem; font-weight: 800; letter-spacing: 0.055em; text-transform: uppercase; }
+  .startiapp-credit-name { margin-top: 0.22rem; color: #fff; font-family: Montserrat, ui-sans-serif, system-ui, sans-serif; font-size: 1.42rem; font-weight: 800; letter-spacing: 0; }
   .login-page { background: radial-gradient(circle at 15% 15%, color-mix(in srgb, var(--app-primary) 17%, transparent), transparent 25rem), var(--app-background); }
-  .login-shell { display: grid; min-height: 100dvh; place-items: center; padding: 1.5rem; }
+  .login-shell { display: grid; min-height: 100dvh; place-items: center; padding: calc(1.5rem + var(--app-safe-area-top)) calc(1.5rem + var(--app-safe-area-right)) calc(1.5rem + var(--app-safe-area-bottom)) calc(1.5rem + var(--app-safe-area-left)); }
   .login-card { width: min(100%, 28rem); border: 1px solid var(--app-line); border-radius: 1.25rem; background: var(--app-surface); box-shadow: var(--app-shadow); padding: 2rem; }
   .login-card > img { border-radius: 1rem; }
   .login-card h1 { margin-top: 0.35rem; font-size: 2.25rem; }
@@ -132,10 +141,10 @@
 }
 
 @media (min-width: 64rem) {
-  .app-header-inner { padding-right: 1.5rem; padding-left: 1.5rem; }
+  .app-header-inner { padding-right: calc(1.5rem + var(--app-safe-area-right)); padding-left: calc(1.5rem + var(--app-safe-area-left)); }
   .desktop-navigation { display: flex; align-items: center; gap: 0.2rem; border: 1px solid var(--app-line); border-radius: 999px; background: var(--app-surface); padding: 0.25rem; }
   .account-name { display: inline; }
-  .app-main { padding-bottom: 3rem; }
+  .app-main { padding-bottom: calc(3rem + var(--app-safe-area-bottom)); }
   .mobile-navigation { display: none; }
   .more-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
