@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+  <section class="more-page activity-page" aria-labelledby="activities-title">
+    <div class="page-heading">
+      <p class="eyebrow">Program</p>
+      <h1 id="activities-title">Aktiviteter</h1>
+      <p>Alle aktiviteter er synlige for deltagerne i det aktive eventår.</p>
+    </div>
+    <div class="activity-list">
+      {% for activity in activities %}
+        <a class="activity-list-item" href="{% url 'core:activity_detail' activity.public_id %}">
+          <span class="activity-list-date">{{ activity.activity_date|date:"D j. M" }}<small>{% if activity.is_time_approximate %}Cirka {% endif %}{{ activity.start_time|time:"H:i" }}{% if activity.end_time %}–{{ activity.end_time|time:"H:i" }}{% endif %}</small></span>
+          <span><strong>{{ activity.title }}</strong><small>{{ activity.description|truncatechars:120 }}</small></span>
+          <span aria-hidden="true">›</span>
+        </a>
+      {% empty %}
+        <p class="placeholder-status">Der er endnu ingen aktiviteter i programmet.</p>
+      {% endfor %}
+    </div>
+    {% if form %}
+      <div class="activity-form-section">
+        <h2>Opret aktivitet</h2>
+        <form method="post" class="activity-form" data-submit-feedback data-submitting-label="Opretter aktivitet…">{% csrf_token %}
+          {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
+          {% for field in form %}
+            <div class="activity-form-field{% if field.field.widget.input_type == 'checkbox' %} activity-form-checkbox{% endif %}">
+              {{ field.label_tag }}{{ field }}{% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+          {% endfor %}
+          <button class="operation-button" type="submit">Opret aktivitet</button>
+          <p class="submission-status" data-submission-status hidden role="status">Aktiviteten oprettes. Vent venligst.</p>
+        </form>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

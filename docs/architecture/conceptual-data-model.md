@@ -7,7 +7,7 @@ This is non-binding; final fields and relationships require a feature specificat
 **Account-model decision: Implemented.** `accounts.User` subclasses Django's `AbstractUser`, retains username/password login, adds a public UUID, and remains distinct from `Participant`.
 
 - **Accounts/people:** User/LoginAccount, Participant, Household, HouseholdMembership, EventParticipation, EventRole, Invitation, active-profile session context.
-- **Events/schedule:** EventSeries, EventYear, venue/location fields, Activity, ActivityAudience, Reminder.
+- **Events/schedule:** EventSeries, EventYear, venue/location fields, Activity, ActivityAudience, Reminder. The implemented `Activity` is event-scoped and stores its title, description, local event date/time range, approximate-time flag, owner participation, and creator/updater accounts. Audiences and reminders remain planned.
 - **Chores:** ChoreType, ChoreOccurrence, ChorePlanVersion, ChoreAssignment, ParticipantChoreSettings, ParticipantDailyAvailability, ChorePreference, ChoreTransferRequest.
 - **Communication:** Channel, ChannelMembership, ChannelSubscription, Message, optional later attachment.
 - **Food/shopping:** Product, ProductUnit, StorageLocation, StockObservation, MissingReport, FoodReservation, DinnerBox/NamedPurpose, ShoppingRequest, ShoppingList, ShoppingListLine, ShoppingExport, optional VendorProductReference.

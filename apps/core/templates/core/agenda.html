@@ -1,12 +1,26 @@
 {% extends 'core/base.html' %}
-{% load static %}
 
 {% block content %}
-  <section class="placeholder-card" aria-labelledby="page-title">
-    <img class="placeholder-mark" src="{% static 'core/branding/polsk-white-64.png' %}" width="64" height="64" alt="" aria-hidden="true">
+  <section class="agenda-page" aria-labelledby="page-title">
     <p class="eyebrow">Program</p>
     <h1 id="page-title">Agenda</h1>
-    <p>Her kan du se dine opgaver og hvad der sker under Polsk.</p>
-    <p class="placeholder-status"><span aria-hidden="true">●</span> Der er endnu ingen aktiviteter i programmet.</p>
+    <p class="page-intro">Her kan du se, hvad der sker under Polsk.</p>
+    {% regroup activities by activity_date as activity_days %}
+    <div class="agenda-list">
+      {% for day in activity_days %}
+        <section class="agenda-day" aria-labelledby="day-{{ forloop.counter }}">
+          <h2 id="day-{{ forloop.counter }}">{{ day.grouper|date:"l j. F" }}</h2>
+          {% for activity in day.list %}
+            <a class="agenda-activity" href="{% url 'core:activity_detail' activity.public_id %}">
+              <span class="agenda-time">{% if activity.is_time_approximate %}Cirka {% endif %}{{ activity.start_time|time:"H:i" }}{% if activity.end_time %}–{{ activity.end_time|time:"H:i" }}{% endif %}</span>
+              <span><strong>{{ activity.title }}</strong><small>{{ activity.description|truncatechars:120 }}</small></span>
+              <span aria-hidden="true">›</span>
+            </a>
+          {% endfor %}
+        </section>
+      {% empty %}
+        <p class="placeholder-status">Der er endnu ingen aktiviteter i programmet.</p>
+      {% endfor %}
+    </div>
   </section>
 {% endblock %}

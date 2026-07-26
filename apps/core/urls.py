@@ -39,6 +39,11 @@ urlpatterns = [
         name="cleanup_login_protection",
     ),
     path("aktiviteter/", views.activities, name="activities"),
+    path(
+        "aktiviteter/<uuid:activity_public_id>/",
+        views.activity_detail,
+        name="activity_detail",
+    ),
     path("deltagere/", views.directory, name="directory"),
     path(
         "deltagere/<uuid:participant_public_id>/nulstil-adgang/",

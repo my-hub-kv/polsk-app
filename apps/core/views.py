@@ -7,11 +7,12 @@ import json
 import logging
 import os
 from typing import Literal
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import connection
 from django.http import (
     HttpRequest,
@@ -24,10 +25,13 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.accounts.models import Invitation
 from apps.accounts.services import create_invitation, purge_expired_throttle_state
+from apps.events.forms import ActivityForm
+from apps.events.selectors import activities_for_event_year, activity_for_event_year
+from apps.events.services import can_edit_activity, create_activity, update_activity
 from apps.notifications.models import Notification
 from apps.notifications.providers.starti_push import starti_user_id_for_user
 from apps.notifications.services import (
@@ -80,7 +84,7 @@ FEATURE_REGISTRY = (
         "core:activities",
         "calendar",
         "more",
-        False,
+        True,
         "Planlagte aktiviteter under eventet.",
     ),
     FeatureDefinition(
@@ -145,7 +149,6 @@ FEATURES_BY_KEY: dict[str, FeatureDefinition] = {
 PLACEHOLDER_PAGES = {
     "chores": ("Opgaver", "Her kommer dine og fællesskabets opgaver."),
     "messages": ("Beskeder", "Her kommer eventets fælles beskeder og kanaler."),
-    "activities": ("Aktiviteter", "Her kommer eventets aktiviteter."),
     "directory": ("Deltagere", "Her kommer deltageroversigten."),
     "notifications": ("Notifikationer", "Her kommer dine notifikationer."),
     "profile": ("Min profil", "Her kommer indstillinger for din profil."),
@@ -242,10 +245,14 @@ def _released_feature(
         view: Callable[[HttpRequest], HttpResponse],
     ) -> Callable[[HttpRequest], HttpResponse]:
         @wraps(view)
-        def wrapped(request: HttpRequest) -> HttpResponse:
+        def wrapped(
+            request: HttpRequest,
+            *args: object,
+            **kwargs: object,
+        ) -> HttpResponse:
             if not _feature_is_available(request, feature_key):
                 return redirect("core:home")
-            return view(request)
+            return view(request, *args, **kwargs)
 
         return wrapped
 
@@ -279,19 +286,123 @@ def _placeholder_view(
 @ensure_csrf_cookie
 @_released_feature("agenda")
 def home(request: HttpRequest) -> HttpResponse:
-    """Render the published agenda empty state until activities are available."""
+    """Render the active event year's shared activity schedule."""
     context = _shell_context(request, "agenda", "Agenda")
+    active_context = active_context_for_request(request)
+    context["activities"] = (
+        activities_for_event_year(
+            event_year_id=active_context.event_participation.event_year_id
+        )
+        if active_context
+        else []
+    )
     return render(request, "core/agenda.html", context)
 
 
 chores = _placeholder_view("chores", "chores")
 messages = _placeholder_view("messages", "messages")
-activities = _placeholder_view("activities", "more")
 profile = _placeholder_view("profile", "more")
 history = _placeholder_view("history", "more")
 weather = _placeholder_view("weather", "more")
 food = _placeholder_view("food", "food")
 shopping = _placeholder_view("shopping", "more")
+
+
+@login_required
+@ensure_csrf_cookie
+@_released_feature("activities")
+@require_http_methods(["GET", "POST"])
+def activities(request: HttpRequest) -> HttpResponse:
+    """List all active-event activities and allow authenticated participants to add one."""
+    context = _shell_context(request, "more", "Aktiviteter")
+    active_context = active_context_for_request(request)
+    if active_context is None:
+        context.update({"activities": [], "form": None})
+        return render(request, "core/activities.html", context)
+
+    participation = active_context.event_participation
+    if request.method == "POST":
+        form = ActivityForm(request.POST)
+        if form.is_valid():
+            try:
+                activity = create_activity(
+                    event_participation=participation,
+                    acting_user=request.user,
+                    **form.cleaned_data,
+                )
+            except ValidationError as error:
+                form.add_error(None, error)
+            else:
+                django_messages.success(request, "Aktiviteten er oprettet.")
+                return redirect("core:activity_detail", activity_public_id=activity.public_id)
+    else:
+        form = ActivityForm()
+
+    context.update(
+        {
+            "activities": activities_for_event_year(
+                event_year_id=participation.event_year_id
+            ),
+            "form": form,
+        }
+    )
+    return render(request, "core/activities.html", context)
+
+
+@login_required
+@ensure_csrf_cookie
+@_released_feature("activities")
+@require_http_methods(["GET", "POST"])
+def activity_detail(
+    request: HttpRequest,
+    activity_public_id: UUID,
+) -> HttpResponse:
+    """Show one event-scoped activity and allow only its owner or an admin to edit it."""
+    active_context = active_context_for_request(request)
+    if active_context is None:
+        return HttpResponseNotFound()
+    participation = active_context.event_participation
+    activity = activity_for_event_year(
+        event_year_id=participation.event_year_id,
+        public_id=activity_public_id,
+    )
+    if activity is None:
+        return HttpResponseNotFound()
+
+    can_edit = can_edit_activity(
+        activity=activity,
+        event_participation=participation,
+    )
+    if request.method == "POST":
+        if not can_edit:
+            raise PermissionDenied
+        form = ActivityForm(
+            request.POST,
+            instance=activity,
+        )
+        if form.is_valid():
+            try:
+                activity = update_activity(
+                    activity=activity,
+                    event_participation=participation,
+                    acting_user=request.user,
+                    **form.cleaned_data,
+                )
+            except ValidationError as error:
+                form.add_error(None, error)
+            else:
+                django_messages.success(request, "Aktiviteten er opdateret.")
+                return redirect("core:activity_detail", activity_public_id=activity.public_id)
+    else:
+        form = (
+            ActivityForm(instance=activity)
+            if can_edit
+            else None
+        )
+
+    context = _shell_context(request, "more", activity.title)
+    context.update({"activity": activity, "form": form, "can_edit_activity": can_edit})
+    return render(request, "core/activity_detail.html", context)
 
 
 @login_required

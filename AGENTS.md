@@ -53,7 +53,8 @@ If no skill applies, follow the development guides directly. Skills supplement t
 3. Keep views thin, validate input explicitly, use services for multi-model workflows, selectors/QuerySets for reusable reads, transactions for state changes, and database constraints for important invariants.
 4. Avoid primary-workflow signals, hidden cross-app effects, generic `utils.py` modules, premature abstractions, and unreviewed dependencies.
 5. Use timezone-aware datetimes, deliberate related-object loading, type hints for public/non-trivial functions, semantic accessible mobile-first HTML, and Danish visible text.
-6. Update affected documentation and honestly summarize behaviour, authorization, security, migrations, tests, and open questions.
+6. Review query shape, transaction duration, and perceived responsiveness for every feature and code review; provide accessible loading feedback for operations that may wait on database or provider work.
+7. Update affected documentation and honestly summarize behaviour, authorization, security, performance, migrations, tests, and open questions.
 
 Create schema migrations with `python manage.py makemigrations`; never hand-write schema migration files. Never modify an existing data migration after it has been created or applied—add a new, reviewed migration instead. Use repository scripts when present, plus `python manage.py makemigrations --check --dry-run` and `git diff --check`. Test successful and denied authorization, event-year isolation, profile switching, deletion, constraints, CSV safety, date boundaries, and mocked provider adapters as relevant. CI PostgreSQL 17 is authoritative.
 

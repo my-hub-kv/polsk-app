@@ -16,6 +16,7 @@ Use the layers relevant to the change:
 - Notification idempotency and provider-adapter contract tests.
 - Deletion, timezone/date-boundary, and important-list query-count tests.
 - Practical accessibility smoke checks for participant-facing templates.
+- Performance and perceived-responsiveness checks for important lists and slow mutations, including visible loading feedback where database or provider latency is expected.
 
 ## Django test rules
 

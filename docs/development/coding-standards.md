@@ -25,6 +25,7 @@ The project uses an 88-character line-length target, except for unavoidable URLs
 - Use Post/Redirect/Get after successful browser form mutations. Restrict unsafe endpoints to the intended HTTP methods and enforce authentication and object-level authorization in server-side code.
 - Put multi-model state changes in explicit service functions. Use `transaction.atomic()` for a state transition that must succeed or fail together; keep transactions short and register external side effects only after commit.
 - Put reusable read patterns in QuerySets, managers, or clearly named selectors. Scope every event-owned query to its event year before object lookup, and use `select_related()`/`prefetch_related()` deliberately for lists.
+- Review query shape, transaction duration, and perceived loading feedback for every feature and code review; follow [performance](performance.md) for the required checks.
 - Treat a model's default manager as part of the product contract. When ordinary product access must exclude internal or system-managed rows, use an explicit full-access manager such as `all_objects`, audit admin/related-manager/migration behaviour, and test both visibility paths. Do not hide rows by default without checking those consequences.
 - Use database constraints for invariants that must hold under concurrent requests. Model/form validation improves feedback but is not a substitute for an important database constraint.
 - Keep templates presentational. Do not put business rules, authorization decisions, writes, or query-heavy loops in templates.
