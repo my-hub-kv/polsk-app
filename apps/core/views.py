@@ -6,6 +6,7 @@ import hmac
 import json
 import logging
 import os
+from time import perf_counter
 from typing import Literal
 from uuid import UUID
 
@@ -51,6 +52,7 @@ from apps.people.services import (
 
 
 logger = logging.getLogger(__name__)
+performance_logger = logging.getLogger("apps.performance")
 
 MAX_CLIENT_ERROR_BODY_BYTES = 4_096
 MAX_CLIENT_ERROR_MESSAGE_LENGTH = 300
@@ -314,9 +316,10 @@ shopping = _placeholder_view("shopping", "more")
 @require_http_methods(["GET", "POST"])
 def activities(request: HttpRequest) -> HttpResponse:
     """List all active-event activities and allow authenticated participants to add one."""
-    context = _shell_context(request, "more", "Aktiviteter")
+    request_started_at = perf_counter() if request.method == "POST" else None
     active_context = active_context_for_request(request)
     if active_context is None:
+        context = _shell_context(request, "more", "Aktiviteter")
         context.update({"activities": [], "form": None})
         return render(request, "core/activities.html", context)
 
@@ -324,6 +327,7 @@ def activities(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = ActivityForm(request.POST)
         if form.is_valid():
+            form_validation_completed_at = perf_counter()
             try:
                 activity = create_activity(
                     event_participation=participation,
@@ -333,11 +337,25 @@ def activities(request: HttpRequest) -> HttpResponse:
             except ValidationError as error:
                 form.add_error(None, error)
             else:
+                if (
+                    settings.PERFORMANCE_TIMING_LOGGING
+                    and request_started_at is not None
+                ):
+                    performance_logger.info(
+                        "performance_activity_create_view total_ms=%d "
+                        "request_setup_and_form_ms=%d service_ms=%d",
+                        int((perf_counter() - request_started_at) * 1_000),
+                        int(
+                            (form_validation_completed_at - request_started_at) * 1_000
+                        ),
+                        int((perf_counter() - form_validation_completed_at) * 1_000),
+                    )
                 django_messages.success(request, "Aktiviteten er oprettet.")
                 return redirect("core:activity_detail", activity_public_id=activity.public_id)
     else:
         form = ActivityForm()
 
+    context = _shell_context(request, "more", "Aktiviteter")
     context.update(
         {
             "activities": activities_for_event_year(
@@ -378,7 +396,6 @@ def activity_detail(
             raise PermissionDenied
         form = ActivityForm(
             request.POST,
-            instance=activity,
         )
         if form.is_valid():
             try:
@@ -395,7 +412,7 @@ def activity_detail(
                 return redirect("core:activity_detail", activity_public_id=activity.public_id)
     else:
         form = (
-            ActivityForm(instance=activity)
+            ActivityForm(activity=activity)
             if can_edit
             else None
         )

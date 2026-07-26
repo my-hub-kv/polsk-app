@@ -17,7 +17,17 @@ non-persistent as configured; do not change pooling settings solely to mask late
 - Keep mutation transactions short. Provider calls must remain outside the transaction and
   after commit.
 - Consider fan-out work, such as notification creation, as proportional to the number of
-  recipients and review it before expanding a workflow.
+  recipients and review it before expanding a workflow. For one event-wide notification, validate
+  recipients and bulk-create durable records; do not repeat a full database workflow per account.
+- In a successful POST/Redirect/Get mutation, do not construct page-shell data that the redirect
+  discards. Build navigation, unread counts, and profile menus only when rendering a response.
+- Keep participant-input validation local to a form or service where possible. Do not use a broad
+  model `full_clean()` merely to revalidate trusted server-derived foreign keys; preserve explicit
+  service authorization and database constraints instead. Cross-model validation remains required
+  in model/admin workflows where those relations are user-editable.
+- Request-triggered notification dispatch is deliberately best effort and drains all due work
+  in claims of 50; it keeps provider latency out of the user request but may occupy a web process
+  for a large queue. Do not add unbounded provider concurrency merely to shorten that work.
 
 ## Perceived responsiveness
 
@@ -30,6 +40,20 @@ colour or animation.
 When adding a new slow operation, reuse these patterns or provide an equally accessible local
 loading state. Preserve ordinary browser validation before disabling a submit control, and make
 the action idempotent or safe against repeated submission on the server.
+
+## Local timing diagnostics
+
+For a reproducible local investigation, set `PERFORMANCE_TIMING_LOGGING=True` in the ignored
+`.env` file and restart the Django process. The console then writes safe duration and count-only
+lines for activity creation, notification fan-out, dispatcher scheduling, and background delivery.
+They deliberately exclude titles, descriptions, account identifiers, event identifiers, URLs, and
+provider responses. Copy those lines with the matching browser timestamp when diagnosing a delay,
+then set the option back to `False` after the investigation.
+
+The diagnostic records the effective delivery-policy booleans, the duration of transaction commit
+and post-commit callbacks, and the time spent returning from `Thread.start()`. It also records the
+background thread entering and ending. This distinguishes synchronous provider delivery, slow
+database commit, and a genuinely asynchronous dispatcher without logging private configuration.
 
 ## Review checklist
 
