@@ -5,14 +5,14 @@
     <div class="page-heading">
       <p class="eyebrow">Polsk App</p>
       <h1 id="page-title">Mere</h1>
-      <p>Find flere dele af Polsk App, som kommer løbende.</p>
+      <p>Find deltageroversigten, dine notifikationer og andre dele af Polsk App.</p>
     </div>
     <div class="more-grid">
-      {% for title, description, url in more_items %}
-        <a class="more-card" href="{{ url }}">
+      {% for item in more_items %}
+        <a class="more-card" href="{{ item.url }}">
           <span>
-            <strong>{{ title }}</strong>
-            <small>{{ description }}</small>
+            <strong>{{ item.title }}</strong>
+            <small>{{ item.description }}</small>
           </span>
           <span aria-hidden="true">→</span>
         </a>

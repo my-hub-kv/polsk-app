@@ -37,11 +37,134 @@ class AuthenticationShellTests(TestCase):
         )
         self.assertRedirects(response, reverse("core:home"))
 
+    def test_normal_participant_sees_only_published_navigation(self) -> None:
+        self.client.force_login(self.user)
+
+        agenda_response = self.client.get(reverse("core:home"))
+        self.assertEqual(
+            [item["key"] for item in agenda_response.context["navigation_items"]],
+            ["agenda", "more"],
+        )
+        self.assertEqual(
+            [item["key"] for item in agenda_response.context["navigation_items"] if item["active"]],
+            ["agenda"],
+        )
+
+        more_response = self.client.get(reverse("core:more"))
+        self.assertEqual(
+            [item["key"] for item in more_response.context["more_items"]],
+            ["directory", "notifications"],
+        )
+
+    def test_agenda_has_a_real_empty_state(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, "Der er endnu ingen aktiviteter i programmet.")
+        self.assertNotContains(response, "Denne del er under opbygning.")
+
+    def test_normal_participant_is_redirected_from_unpublished_feature_pages(self) -> None:
+        self.client.force_login(self.user)
+
+        for route_name in (
+            "chores",
+            "messages",
+            "food",
+            "food_and_shopping",
+            "activities",
+            "profile",
+            "shopping",
+            "history",
+            "weather",
+        ):
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(f"core:{route_name}"))
+                self.assertRedirects(response, reverse("core:home"))
+
+    def test_staff_and_superusers_can_review_without_event_administrator_access(
+        self,
+    ) -> None:
+        staff_user = get_user_model().objects.create_user(
+            username="staff-reviewer", password="safe-test-password", is_staff=True
+        )
+        superuser = get_user_model().objects.create_superuser(
+            username="superuser-reviewer", password="safe-test-password"
+        )
+
+        for reviewer in (staff_user, superuser):
+            with self.subTest(reviewer=reviewer.username):
+                self.client.force_login(reviewer)
+
+                agenda_response = self.client.get(reverse("core:home"))
+                self.assertEqual(
+                    [item["key"] for item in agenda_response.context["navigation_items"]],
+                    ["agenda", "chores", "messages", "food", "more"],
+                )
+                more_response = self.client.get(reverse("core:more"))
+                self.assertEqual(
+                    [item["key"] for item in more_response.context["more_items"]],
+                    [
+                        "activities",
+                        "directory",
+                        "notifications",
+                        "profile",
+                        "shopping",
+                        "history",
+                        "weather",
+                    ],
+                )
+                for route_name in (
+                    "chores",
+                    "messages",
+                    "food",
+                    "activities",
+                    "profile",
+                    "shopping",
+                    "history",
+                    "weather",
+                ):
+                    with self.subTest(route_name=route_name):
+                        response = self.client.get(reverse(f"core:{route_name}"))
+                        self.assertEqual(response.status_code, 200)
+
+                self.assertRedirects(
+                    self.client.get(reverse("core:food_and_shopping")),
+                    reverse("core:food"),
+                )
+                self.assertEqual(
+                    self.client.get(reverse("core:administration")).status_code,
+                    403,
+                )
+                self.assertEqual(
+                    self.client.post(reverse("core:process_notifications")).status_code,
+                    403,
+                )
+
     @override_settings(STARTIAPP_BRAND_NAME="")
     def test_browser_login_omits_optional_starti_assets(self) -> None:
         response = self.client.get(reverse("core:login"))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "cdn.starti.app")
+
+    @override_settings(STARTIAPP_BRAND_NAME="test-brand")
+    def test_authenticated_shell_includes_starti_credit_link(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, 'href="https://starti.app/"')
+        self.assertContains(response, "data-startiapp-credit")
+        self.assertContains(response, "hidden")
+        self.assertContains(response, "Powered by")
+
+    @override_settings(STARTIAPP_BRAND_NAME="")
+    def test_authenticated_shell_omits_starti_credit_without_starti(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertNotContains(response, "startiapp-credit")
 
     def test_login_normalizes_username_case(self) -> None:
         response = self.client.post(
@@ -123,6 +246,15 @@ class NotificationViewTests(TestCase):
         response = self.client.post(reverse("core:mark_notifications_opened"))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(NotificationState.objects.get(recipient=self.user, event_year=self.event).last_opened_at)
+
+    @override_settings(STARTIAPP_BRAND_NAME="test-brand")
+    def test_push_control_is_hidden_until_the_native_bridge_confirms_the_app(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:notifications"))
+
+        self.assertContains(response, "data-startiapp-push-control")
+        self.assertContains(response, "data-startiapp-push-control hidden")
 
 
 class ClientErrorTests(TestCase):

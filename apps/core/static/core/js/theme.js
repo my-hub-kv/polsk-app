@@ -5,6 +5,7 @@
   const root = document.documentElement;
   const controls = document.querySelectorAll("[data-theme-toggle]");
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const themeColor = document.querySelector('meta[name="theme-color"]');
 
   function currentTheme() {
     return root.dataset.theme === "dark" ? "dark" : "light";
@@ -12,6 +13,7 @@
 
   function updateControls() {
     const isDark = currentTheme() === "dark";
+    if (themeColor) themeColor.content = isDark ? "#101828" : "#f7f8fa";
     controls.forEach((control) => {
       control.setAttribute("aria-pressed", String(isDark));
       control.setAttribute(
@@ -35,6 +37,7 @@
       }
     }
     updateControls();
+    document.dispatchEvent(new Event("polsk:themechange"));
   }
 
   controls.forEach((control) => {

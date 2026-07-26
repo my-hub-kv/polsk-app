@@ -15,8 +15,10 @@ function runBridge({
   const timers = new Map();
   let nextTimerId = 0;
   const body = { dataset };
+  const documentElement = { dataset: {} };
   const document = {
     body,
+    documentElement,
     cookie: "",
     querySelector: (selector) => elements[selector] || null,
     addEventListener(type, listener, options = {}) {
@@ -60,7 +62,7 @@ function runBridge({
       }
     },
   });
-  return { timers };
+  return { document, documentElement, timers };
 }
 
 async function settle() {
@@ -82,6 +84,45 @@ test("registers the opaque identity after one native initialization", async () =
   await settle();
   assert.equal(initializeCalls, 1);
   assert.equal(registeredId, "opaque-account-id");
+});
+
+test("matches native system bars to the current theme and syncs live theme changes", async () => {
+  let options;
+  const safeAreaColors = [];
+  const statusBarUpdates = [];
+  const { document, documentElement } = runBridge({
+    dataset: { startiappMode: "authenticated" },
+    sdk: {
+      initialize: async (value) => { options = value; },
+      isRunningInApp: () => true,
+      App: {
+        setSafeAreaBackgroundColor: (value) => { safeAreaColors.push(value); },
+        setStatusBar: (value) => { statusBarUpdates.push(value); },
+      },
+    },
+  });
+
+  await settle();
+
+  assert.equal(JSON.stringify(options), JSON.stringify({
+    statusBar: {
+      removeSafeArea: true,
+      hideText: false,
+      darkContent: true,
+    },
+  }));
+  assert.deepEqual(safeAreaColors, ["#f7f8fa"]);
+  assert.equal(JSON.stringify(statusBarUpdates), JSON.stringify([{ darkContent: true }]));
+  assert.equal(documentElement.dataset.startiappNative, "true");
+
+  documentElement.dataset.theme = "dark";
+  document.dispatchEvent({ type: "polsk:themechange" });
+
+  assert.deepEqual(safeAreaColors, ["#f7f8fa", "#101828"]);
+  assert.equal(JSON.stringify(statusBarUpdates), JSON.stringify([
+    { darkContent: true },
+    { darkContent: false },
+  ]));
 });
 
 test("initializes after the native bridge emits its late ready event", async () => {
@@ -204,4 +245,68 @@ test("falls back safely when optional native modules are absent", async () => {
   });
   await settle();
   assert.ok(true);
+});
+
+test("shows the Starti credit only after native app detection", async () => {
+  const credit = { hidden: true };
+  runBridge({
+    dataset: { startiappMode: "authenticated" },
+    sdk: {
+      initialize: async () => {},
+      isRunningInApp: () => true,
+    },
+    elements: { "[data-startiapp-credit]": credit },
+  });
+
+  await settle();
+
+  assert.equal(credit.hidden, false);
+});
+
+test("keeps the Starti credit hidden in a browser", async () => {
+  const credit = { hidden: true };
+  runBridge({
+    dataset: { startiappMode: "authenticated" },
+    sdk: {
+      initialize: async () => {},
+      isRunningInApp: () => false,
+    },
+    elements: { "[data-startiapp-credit]": credit },
+  });
+
+  await settle();
+
+  assert.equal(credit.hidden, true);
+});
+
+test("shows the push control only after native app detection", async () => {
+  const control = { hidden: true };
+  runBridge({
+    dataset: { startiappMode: "authenticated" },
+    sdk: {
+      initialize: async () => {},
+      isRunningInApp: () => true,
+    },
+    elements: { "[data-startiapp-push-control]": control },
+  });
+
+  await settle();
+
+  assert.equal(control.hidden, false);
+});
+
+test("keeps the push control hidden in a browser", async () => {
+  const control = { hidden: true };
+  runBridge({
+    dataset: { startiappMode: "authenticated" },
+    sdk: {
+      initialize: async () => {},
+      isRunningInApp: () => false,
+    },
+    elements: { "[data-startiapp-push-control]": control },
+  });
+
+  await settle();
+
+  assert.equal(control.hidden, true);
 });
