@@ -278,3 +278,35 @@ test("keeps the Starti credit hidden in a browser", async () => {
 
   assert.equal(credit.hidden, true);
 });
+
+test("shows the push control only after native app detection", async () => {
+  const control = { hidden: true };
+  runBridge({
+    dataset: { startiappMode: "authenticated" },
+    sdk: {
+      initialize: async () => {},
+      isRunningInApp: () => true,
+    },
+    elements: { "[data-startiapp-push-control]": control },
+  });
+
+  await settle();
+
+  assert.equal(control.hidden, false);
+});
+
+test("keeps the push control hidden in a browser", async () => {
+  const control = { hidden: true };
+  runBridge({
+    dataset: { startiappMode: "authenticated" },
+    sdk: {
+      initialize: async () => {},
+      isRunningInApp: () => false,
+    },
+    elements: { "[data-startiapp-push-control]": control },
+  });
+
+  await settle();
+
+  assert.equal(control.hidden, true);
+});

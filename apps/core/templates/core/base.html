@@ -30,9 +30,9 @@
       <header class="app-header"><div class="app-header-inner">
         <a class="brand-link" href="{% url 'core:home' %}"><img src="{% static 'core/branding/polsk-header-40.png' %}" width="40" height="40" alt=""><span>Polsk App</span></a>
         <nav class="desktop-navigation" aria-label="Hovedmenu">{% for item in navigation_items %}<a class="desktop-navigation-link{% if item.active %} is-active{% endif %}" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.title }}</a>{% endfor %}</nav>
-        <details class="account-menu"><summary aria-label="Åbn kontomenu"><span class="account-avatar" aria-hidden="true">{{ request.user.get_username|slice:':1'|upper }}</span><span class="account-name">{{ request.user.get_username }}</span></summary>
+        <details class="account-menu"><summary aria-label="Åbn kontomenu"><span class="account-avatar" aria-hidden="true">{{ request.user.get_username|slice:':1'|upper }}</span><span class="account-name">{{ request.user.get_username|title }}</span></summary>
           <div class="account-menu-panel">
-            <p class="account-menu-heading">Konto</p><p class="account-menu-username">{{ request.user.get_username }}</p><div class="account-menu-divider"></div>
+            <p class="account-menu-heading">Konto</p><p class="account-menu-username">{{ request.user.get_username|title }}</p><div class="account-menu-divider"></div>
             <button class="account-menu-button" type="button" data-theme-toggle aria-pressed="false"><span data-theme-toggle-label>Skift tema</span></button>
             {% if switchable_participants %}
               <p class="account-menu-heading">Skift til barn i husstanden</p>

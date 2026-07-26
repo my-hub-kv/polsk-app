@@ -116,8 +116,8 @@
   :root[data-theme="dark"] .operation-button { color: #101828; }
   .operation-message { margin-bottom: 1rem; border: 1px solid var(--app-line); border-radius: 0.65rem; background: var(--app-primary-soft); padding: 0.75rem; color: var(--app-text); }
   .operation-message p { margin: 0; }
-  .mobile-navigation { position: fixed; right: 0; bottom: 0; left: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--app-line); background: color-mix(in srgb, var(--app-surface) 94%, transparent); box-shadow: 0 -8px 24px rgb(24 34 48 / 0.1); padding: 0.35rem max(0.35rem, var(--app-safe-area-right)) max(0.35rem, var(--app-safe-area-bottom)) max(0.35rem, var(--app-safe-area-left)); backdrop-filter: blur(18px); }
-  .mobile-navigation-link { display: grid; min-height: 3.75rem; place-items: center; gap: 0.1rem; border-radius: 0.7rem; color: var(--app-muted); font-size: 0.64rem; font-weight: 650; line-height: 1.1; text-align: center; text-decoration: none; }
+  .mobile-navigation { position: fixed; right: 0; bottom: 0; left: 0; z-index: 20; display: flex; border-top: 1px solid var(--app-line); background: color-mix(in srgb, var(--app-surface) 94%, transparent); box-shadow: 0 -8px 24px rgb(24 34 48 / 0.1); padding: 0.35rem max(0.35rem, var(--app-safe-area-right)) max(0.35rem, var(--app-safe-area-bottom)) max(0.35rem, var(--app-safe-area-left)); backdrop-filter: blur(18px); }
+  .mobile-navigation-link { display: grid; min-width: 0; flex: 1 1 0; min-height: 3.75rem; place-items: center; gap: 0.1rem; border-radius: 0.7rem; color: var(--app-muted); font-size: 0.64rem; font-weight: 650; line-height: 1.1; text-align: center; text-decoration: none; }
   .mobile-navigation-link svg { width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
   .mobile-navigation-link.is-active { background: var(--app-primary-soft); color: var(--app-primary-strong); }
   .navigation-badge { display: inline-grid; min-width: 1rem; height: 1rem; place-items: center; border-radius: 999px; background: var(--app-accent); color: #fff; font-size: 0.62rem; }

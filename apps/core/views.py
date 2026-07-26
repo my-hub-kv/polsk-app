@@ -1,9 +1,12 @@
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import timedelta
+from functools import wraps
 import hmac
 import json
 import logging
 import os
+from typing import Literal
 
 from django.conf import settings
 from django.contrib import messages as django_messages
@@ -50,22 +53,98 @@ MAX_CLIENT_ERROR_MESSAGE_LENGTH = 300
 MAX_CLIENT_ERROR_SOURCE_LENGTH = 200
 ADMIN_NOTIFICATION_DELIVERY_LIMIT = 10
 
-PRIMARY_NAVIGATION = (
-    ("agenda", "Agenda", "core:home", "calendar"),
-    ("chores", "Opgaver", "core:chores", "checklist"),
-    ("messages", "Beskeder", "core:messages", "messages"),
-    ("food_and_shopping", "Mad og indkøb", "core:food_and_shopping", "basket"),
-    ("more", "Mere", "core:more", "more"),
+@dataclass(frozen=True)
+class FeatureDefinition:
+    """Describe one reviewable participant feature release."""
+
+    key: str
+    title: str
+    route_name: str
+    icon: str
+    placement: Literal["primary", "more"]
+    published: bool
+    description: str = ""
+
+
+# This registry deliberately controls only released participant navigation and pages.
+# Domain authorization continues to be enforced by the individual views and services.
+FEATURE_REGISTRY = (
+    FeatureDefinition("agenda", "Agenda", "core:home", "calendar", "primary", True),
+    FeatureDefinition("chores", "Opgaver", "core:chores", "checklist", "primary", False),
+    FeatureDefinition("messages", "Beskeder", "core:messages", "messages", "primary", False),
+    FeatureDefinition("food", "Mad", "core:food", "basket", "primary", False),
+    FeatureDefinition("more", "Mere", "core:more", "more", "primary", True),
+    FeatureDefinition(
+        "activities",
+        "Aktiviteter",
+        "core:activities",
+        "calendar",
+        "more",
+        False,
+        "Planlagte aktiviteter under eventet.",
+    ),
+    FeatureDefinition(
+        "directory",
+        "Deltagere",
+        "core:directory",
+        "more",
+        "more",
+        True,
+        "Se eventets deltageroversigt.",
+    ),
+    FeatureDefinition(
+        "notifications",
+        "Notifikationer",
+        "core:notifications",
+        "more",
+        "more",
+        True,
+        "Se relevante opdateringer.",
+    ),
+    FeatureDefinition(
+        "profile",
+        "Min profil",
+        "core:profile",
+        "more",
+        "more",
+        False,
+        "Se dine kommende profilindstillinger.",
+    ),
+    FeatureDefinition(
+        "shopping",
+        "Indkøb",
+        "core:shopping",
+        "basket",
+        "more",
+        False,
+        "Se indkøbsønsker og lister.",
+    ),
+    FeatureDefinition(
+        "history",
+        "Tidligere år",
+        "core:history",
+        "more",
+        "more",
+        False,
+        "Gå på opdagelse i eventets historik.",
+    ),
+    FeatureDefinition(
+        "weather",
+        "Vejr",
+        "core:weather",
+        "more",
+        "more",
+        False,
+        "Se vejr som støtte til planlægningen.",
+    ),
 )
+FEATURES_BY_KEY: dict[str, FeatureDefinition] = {
+    feature.key: feature for feature in FEATURE_REGISTRY
+}
 
 PLACEHOLDER_PAGES = {
-    "agenda": ("Agenda", "Her kommer dagens program og opgaver."),
     "chores": ("Opgaver", "Her kommer dine og fællesskabets opgaver."),
     "messages": ("Beskeder", "Her kommer eventets fælles beskeder og kanaler."),
-    "food_and_shopping": (
-        "Mad og indkøb",
-        "Her kommer overblik over mad, lager og indkøb.",
-    ),
     "activities": ("Aktiviteter", "Her kommer eventets aktiviteter."),
     "directory": ("Deltagere", "Her kommer deltageroversigten."),
     "notifications": ("Notifikationer", "Her kommer dine notifikationer."),
@@ -85,24 +164,55 @@ def _safe_client_error_text(value: object, maximum_length: int) -> str:
     return " ".join(value.split())[:maximum_length]
 
 
-def _navigation_items(active_page: str) -> list[dict[str, str | bool]]:
-    """Return presentation-only navigation items for the authenticated shell."""
+def _can_review_unpublished_features(request: HttpRequest) -> bool:
+    """Return whether this account may review unreleased participant pages."""
+    return bool(
+        request.user.is_authenticated
+        and (request.user.is_staff or request.user.is_superuser)
+    )
+
+
+def _feature_is_available(request: HttpRequest, feature_key: str) -> bool:
+    """Return release availability without granting feature-specific permissions."""
+    feature = FEATURES_BY_KEY.get(feature_key)
+    return bool(
+        feature and (feature.published or _can_review_unpublished_features(request))
+    )
+
+
+def _feature_items(
+    request: HttpRequest,
+    placement: Literal["primary", "more"],
+    active_page: str,
+) -> list[dict[str, object]]:
+    """Return visible registry items for a participant shell placement."""
     return [
         {
-            "key": key,
-            "title": title,
-            "url": reverse(url_name),
-            "icon": icon,
-            "active": key == active_page,
+            "key": feature.key,
+            "title": feature.title,
+            "url": reverse(feature.route_name),
+            "icon": feature.icon,
+            "active": feature.key == active_page,
+            "published": feature.published,
+            "description": feature.description,
         }
-        for key, title, url_name, icon in PRIMARY_NAVIGATION
+        for feature in FEATURE_REGISTRY
+        if feature.placement == placement and _feature_is_available(request, feature.key)
     ]
 
 
 def _shell_context(request: HttpRequest, active_page: str, page_title: str) -> dict[str, object]:
-    """Return shared shell context without asserting future permissions."""
+    """Return shared shell context and release metadata without granting permissions."""
     context: dict[str, object] = {
-        "navigation_items": _navigation_items(active_page),
+        "navigation_items": _feature_items(request, "primary", active_page),
+        "feature_availability": [
+            {
+                "key": feature.key,
+                "published": feature.published,
+                "visible": _feature_is_available(request, feature.key),
+            }
+            for feature in FEATURE_REGISTRY
+        ],
         "page_title": page_title,
     }
     active_context = active_context_for_request(request)
@@ -123,6 +233,25 @@ def _shell_context(request: HttpRequest, active_page: str, page_title: str) -> d
     return context
 
 
+def _released_feature(
+    feature_key: str,
+) -> Callable[[Callable[[HttpRequest], HttpResponse]], Callable[[HttpRequest], HttpResponse]]:
+    """Redirect normal participants away from a feature not in their release."""
+
+    def decorator(
+        view: Callable[[HttpRequest], HttpResponse],
+    ) -> Callable[[HttpRequest], HttpResponse]:
+        @wraps(view)
+        def wrapped(request: HttpRequest) -> HttpResponse:
+            if not _feature_is_available(request, feature_key):
+                return redirect("core:home")
+            return view(request)
+
+        return wrapped
+
+    return decorator
+
+
 def _placeholder_view(
     page_key: str,
     active_page: str,
@@ -132,6 +261,8 @@ def _placeholder_view(
     @login_required
     @ensure_csrf_cookie
     def view(request: HttpRequest) -> HttpResponse:
+        if not _feature_is_available(request, page_key):
+            return redirect("core:home")
         page = PLACEHOLDER_PAGES.get(page_key)
         if page is None:
             return HttpResponseNotFound()
@@ -144,41 +275,49 @@ def _placeholder_view(
     return view
 
 
-home = _placeholder_view("agenda", "agenda")
+@login_required
+@ensure_csrf_cookie
+@_released_feature("agenda")
+def home(request: HttpRequest) -> HttpResponse:
+    """Render the published agenda empty state until activities are available."""
+    context = _shell_context(request, "agenda", "Agenda")
+    return render(request, "core/agenda.html", context)
+
+
 chores = _placeholder_view("chores", "chores")
 messages = _placeholder_view("messages", "messages")
-food_and_shopping = _placeholder_view("food_and_shopping", "food_and_shopping")
 activities = _placeholder_view("activities", "more")
-directory = _placeholder_view("directory", "more")
-notifications = _placeholder_view("notifications", "more")
 profile = _placeholder_view("profile", "more")
 history = _placeholder_view("history", "more")
 weather = _placeholder_view("weather", "more")
-food = _placeholder_view("food", "food_and_shopping")
-shopping = _placeholder_view("shopping", "food_and_shopping")
+food = _placeholder_view("food", "food")
+shopping = _placeholder_view("shopping", "more")
+
+
+@login_required
+def food_and_shopping(request: HttpRequest) -> HttpResponse:
+    """Redirect the former combined food route to the primary food section."""
+    if not _feature_is_available(request, "food"):
+        return redirect("core:home")
+    return redirect("core:food")
 
 
 @login_required
 @ensure_csrf_cookie
+@_released_feature("more")
 def more(request: HttpRequest) -> HttpResponse:
-    """Render the secondary navigation for planned participant areas."""
+    """Render the released secondary navigation for participant areas."""
     context = _shell_context(request, "more", "Mere")
-    context["more_items"] = [
-        ("Aktiviteter", "Planlagte aktiviteter under eventet.", reverse("core:activities")),
-        ("Deltagere", "Se eventets deltageroversigt.", reverse("core:directory")),
-        ("Notifikationer", "Se relevante opdateringer.", reverse("core:notifications")),
-        ("Min profil", "Se dine kommende profilindstillinger.", reverse("core:profile")),
-        ("Tidligere år", "Gå på opdagelse i eventets historik.", reverse("core:history")),
-        ("Vejr", "Se vejr som støtte til planlægningen.", reverse("core:weather")),
-    ]
+    context["more_items"] = _feature_items(request, "more", "more")
     active_context = active_context_for_request(request)
     if active_context and event_administrator(active_context.event_participation):
         context["more_items"].append(
-            (
-                "Administration",
-                "Behandl notifikationer og ryd udløbet loginbeskyttelse.",
-                reverse("core:administration"),
-            )
+            {
+                "key": "administration",
+                "title": "Administration",
+                "description": "Behandl notifikationer og ryd udløbet loginbeskyttelse.",
+                "url": reverse("core:administration"),
+            }
         )
     return render(request, "core/more.html", context)
 
@@ -238,6 +377,7 @@ def cleanup_login_protection(request: HttpRequest) -> HttpResponse:
 
 @login_required
 @ensure_csrf_cookie
+@_released_feature("notifications")
 def notifications(request: HttpRequest) -> HttpResponse:
     """Render the authenticated event inbox without mutating read state."""
     context = _shell_context(request, "more", "Notifikationer")
@@ -269,6 +409,7 @@ def mark_notifications_opened(request: HttpRequest) -> JsonResponse:
 
 @login_required
 @ensure_csrf_cookie
+@_released_feature("directory")
 def directory(request: HttpRequest) -> HttpResponse:
     """Show the active event directory and limited administrator onboarding."""
     context = _shell_context(request, "more", "Deltagere")

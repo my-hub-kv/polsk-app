@@ -19,8 +19,10 @@
       {% endfor %}
     </div>
     {% if startiapp_brand_name %}
-      <button class="account-menu-button" type="button" data-startiapp-push-enable>Aktivér pushnotifikationer</button>
-      <p class="account-menu-help" data-startiapp-push-status>Du kan altid ændre tilladelsen i din enheds indstillinger.</p>
+      <div data-startiapp-push-control hidden>
+        <button class="account-menu-button" type="button" data-startiapp-push-enable>Aktivér pushnotifikationer</button>
+        <p class="account-menu-help" data-startiapp-push-status>Du kan altid ændre tilladelsen i din enheds indstillinger.</p>
+      </div>
     {% endif %}
   </section>
   <script src="{% static 'core/js/notification-center.js' %}" defer></script>

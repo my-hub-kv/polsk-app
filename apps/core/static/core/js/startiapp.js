@@ -258,6 +258,11 @@
     if (credit && isRunningInApp(sdk)) credit.hidden = false;
   }
 
+  function showNativePushControl(sdk) {
+    const control = document.querySelector("[data-startiapp-push-control]");
+    if (control && isRunningInApp(sdk)) control.hidden = false;
+  }
+
   async function setupLogout(sdk) {
     const biometrics = sdk.Biometrics;
     if (biometrics && typeof biometrics.removeUsernameAndPassword === "function") {
@@ -277,6 +282,7 @@
     if (body.dataset.startiappMode === "authenticated") {
       registerIdentity(sdk);
       completeCredentialSave(sdk);
+      showNativePushControl(sdk);
       setupPushButton(sdk);
     }
     if (body.dataset.startiappMode === "logout") setupLogout(sdk);
