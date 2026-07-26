@@ -195,6 +195,37 @@ class ActivityScheduleTests(TestCase):
         self.assertEqual(activity.updated_by, self.owner_user)
         self.assertEqual(Notification.objects.count(), 2)
 
+    def test_edit_form_renders_existing_date_in_html_date_format(self) -> None:
+        activity = create_activity(
+            event_participation=self.owner_participation,
+            acting_user=self.owner_user,
+            title="Datoformat",
+            description="Beskrivelse",
+            activity_date=date(2026, 7, 2),
+            start_time=time(10, 0),
+            end_time=None,
+            is_time_approximate=False,
+        )
+        self.client.force_login(self.owner_user)
+
+        response = self.client.get(
+            reverse("core:activity_detail", args=[activity.public_id])
+        )
+
+        self.assertContains(response, 'name="activity_date" value="2026-07-02"')
+
+    def test_form_rejects_an_end_time_before_the_start_time(self) -> None:
+        self.client.force_login(self.owner_user)
+
+        response = self.client.post(
+            reverse("core:activities"),
+            self._activity_payload(start_time="11:00", end_time="10:00"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Sluttidspunktet skal ligge efter starttidspunktet.")
+        self.assertEqual(Activity.objects.count(), 0)
+
     def test_non_owner_cannot_edit_and_other_event_cannot_open_activity(self) -> None:
         activity = create_activity(
             event_participation=self.owner_participation,

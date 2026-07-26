@@ -199,11 +199,27 @@ STARTIAPP_API_KEY = os.getenv("STARTIAPP_API_KEY", "")
 STARTIAPP_ENVIRONMENT_TAG = os.getenv("STARTIAPP_ENVIRONMENT_TAG", "development")
 
 notification_delivery_synchronous = os.getenv(
-    "NOTIFICATION_DELIVERY_SYNCHRONOUS", "True"
+    "NOTIFICATION_DELIVERY_SYNCHRONOUS", "False"
 ).lower()
 if notification_delivery_synchronous not in {"true", "false"}:
     raise RuntimeError("NOTIFICATION_DELIVERY_SYNCHRONOUS must be true or false")
 NOTIFICATION_DELIVERY_SYNCHRONOUS = notification_delivery_synchronous == "true"
+
+notification_delivery_request_triggered = os.getenv(
+    "NOTIFICATION_DELIVERY_REQUEST_TRIGGERED", "True"
+).lower()
+if notification_delivery_request_triggered not in {"true", "false"}:
+    raise RuntimeError(
+        "NOTIFICATION_DELIVERY_REQUEST_TRIGGERED must be true or false"
+    )
+NOTIFICATION_DELIVERY_REQUEST_TRIGGERED = (
+    notification_delivery_request_triggered == "true"
+)
+
+performance_timing_logging = os.getenv("PERFORMANCE_TIMING_LOGGING", "False").lower()
+if performance_timing_logging not in {"true", "false"}:
+    raise RuntimeError("PERFORMANCE_TIMING_LOGGING must be true or false")
+PERFORMANCE_TIMING_LOGGING = performance_timing_logging == "true"
 
 if STARTIAPP_BRAND_NAME and not re.fullmatch(r"[a-z0-9-]+", STARTIAPP_BRAND_NAME):
     raise RuntimeError("STARTIAPP_BRAND_NAME must contain lowercase letters, digits, and hyphens")
@@ -244,6 +260,11 @@ LOGGING = {
         "apps": {
             "handlers": ["console"],
             "level": "ERROR",
+            "propagate": False,
+        },
+        "apps.performance": {
+            "handlers": ["console"],
+            "level": "INFO" if PERFORMANCE_TIMING_LOGGING else "ERROR",
             "propagate": False,
         },
         "django.request": {

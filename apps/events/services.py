@@ -1,18 +1,24 @@
 """Explicit state changes for event activities."""
 
 from datetime import date, time
+import logging
+from time import perf_counter
 from typing import TYPE_CHECKING
 
-from django.core.exceptions import PermissionDenied
+from django.conf import settings
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 
-from apps.notifications.services import enqueue_notification
+from apps.notifications.services import enqueue_notifications
 from apps.people.models import EventParticipation, EventRoleAssignment
 
 from .models import Activity
 
 if TYPE_CHECKING:
     from apps.accounts.models import User
+
+
+performance_logger = logging.getLogger("apps.performance")
 
 
 def create_activity(
@@ -26,11 +32,13 @@ def create_activity(
     end_time: time | None,
     is_time_approximate: bool,
 ) -> Activity:
-    """Create an activity and notify every account in its event year after commit."""
+    """Create an activity and enqueue event-wide notifications after commit."""
+    started_at = perf_counter()
     _require_acting_account(
         event_participation=event_participation,
         acting_user=acting_user,
     )
+    authorization_completed_at = perf_counter()
     with transaction.atomic():
         activity = Activity(
             event_year_id=event_participation.event_year_id,
@@ -44,23 +52,64 @@ def create_activity(
             created_by=acting_user,
             updated_by=acting_user,
         )
-        activity.full_clean()
+        _validate_activity_fields(activity)
+        validation_completed_at = perf_counter()
         activity.save()
+        save_completed_at = perf_counter()
 
-        recipient_ids = EventParticipation.objects.filter(
-            event_year_id=event_participation.event_year_id,
-            participant__login_account__isnull=False,
-        ).values_list("participant__login_account_id", flat=True).distinct()
-        for recipient_id in recipient_ids:
-            enqueue_notification(
+        recipient_ids = list(
+            EventParticipation.objects.filter(
                 event_year_id=event_participation.event_year_id,
-                recipient_id=recipient_id,
-                title=f"Ny aktivitet: {activity.title}",
-                body="Der er tilføjet en aktivitet til programmet.",
-                destination_path=f"/aktiviteter/{activity.public_id}/",
-                idempotency_key=f"activity-created-{activity.public_id}",
+                participant__login_account__isnull=False,
             )
+            .values_list("participant__login_account_id", flat=True)
+            .distinct()
+        )
+        recipient_query_completed_at = perf_counter()
+        notifications = enqueue_notifications(
+            event_year_id=event_participation.event_year_id,
+            recipient_ids=recipient_ids,
+            title=f"Ny aktivitet: {activity.title}",
+            body="Der er tilføjet en aktivitet til programmet.",
+            destination_path=f"/aktiviteter/{activity.public_id}/",
+            idempotency_key=f"activity-created-{activity.public_id}",
+        )
+        notification_enqueue_completed_at = perf_counter()
+    transaction_completed_at = perf_counter()
+
+    if settings.PERFORMANCE_TIMING_LOGGING:
+        performance_logger.info(
+            "performance_activity_create total_ms=%d authorization_ms=%d "
+            "validation_ms=%d save_ms=%d recipient_query_ms=%d "
+            "notification_enqueue_ms=%d transaction_finish_ms=%d "
+            "recipients=%d notifications=%d",
+            int((perf_counter() - started_at) * 1_000),
+            int((authorization_completed_at - started_at) * 1_000),
+            int((validation_completed_at - authorization_completed_at) * 1_000),
+            int((save_completed_at - validation_completed_at) * 1_000),
+            int((recipient_query_completed_at - save_completed_at) * 1_000),
+            int((notification_enqueue_completed_at - recipient_query_completed_at) * 1_000),
+            int((transaction_completed_at - notification_enqueue_completed_at) * 1_000),
+            len(recipient_ids),
+            len(notifications),
+        )
     return activity
+
+
+def _validate_activity_fields(activity: Activity) -> None:
+    """Validate local fields while trusted service state supplies all relations."""
+    activity.clean_fields(
+        exclude={
+            "event_year",
+            "owner_participation",
+            "created_by",
+            "updated_by",
+        }
+    )
+    if activity.end_time and activity.end_time <= activity.start_time:
+        raise ValidationError(
+            {"end_time": "Sluttidspunktet skal ligge efter starttidspunktet."}
+        )
 
 
 def update_activity(
@@ -93,7 +142,7 @@ def update_activity(
     activity.end_time = end_time
     activity.is_time_approximate = is_time_approximate
     activity.updated_by = acting_user
-    activity.full_clean()
+    _validate_activity_fields(activity)
     activity.save()
     return activity
 

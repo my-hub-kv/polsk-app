@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f7f8fa">
     <title>{% block title %}{{ page_title }} | Polsk App{% endblock %}</title>
-    <link rel="icon" href="{% static 'core/branding/favicon.ico' %}" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'core/branding/favicon-32x32.png' %}">
     <link rel="apple-touch-icon" href="{% static 'core/branding/apple-touch-icon-180.png' %}">
-    <link rel="manifest" href="{% static 'core/branding/site.webmanifest' %}">
+    <!-- Disabled for now to ask to install PWA -->
+    <!-- <link rel="manifest" href="{% static 'core/branding/site.webmanifest' %}"> -->
     <script>
       (() => { try { document.documentElement.dataset.theme = localStorage.getItem("polsk-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch (_) { document.documentElement.dataset.theme = "light"; } })();
     </script>
