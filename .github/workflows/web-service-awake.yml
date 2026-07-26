@@ -18,7 +18,7 @@ jobs:
   ping:
     name: Request health endpoint
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
 
     env:
       APP_BASE_URL: ${{ vars.APP_BASE_URL }}
@@ -34,9 +34,9 @@ jobs:
             --silent \
             --output /dev/null \
             --retry 2 \
-            --retry-delay 10 \
+            --retry-delay 40 \
             --retry-all-errors \
-            --connect-timeout 20 \
-            --max-time 150 \
+            --connect-timeout 60 \
+            --max-time 250 \
             --header "Cache-Control: no-store" \
             "${APP_BASE_URL%/}/health/"
