@@ -36,6 +36,7 @@
           <button class="mobile-account-trigger" type="button" data-mobile-shell-menu-open aria-controls="mobile-shell-menu" aria-expanded="false" aria-label="Åbn menu"><span class="account-avatar" aria-hidden="true">{{ request.user.get_username|slice:':1'|upper }}</span></button>
         </div>
       </header>
+      <div class="page-loading-indicator" aria-live="polite" aria-atomic="true"><span class="visually-hidden">Indlæser side</span></div>
       <div id="mobile-shell-menu" class="mobile-shell-menu" data-mobile-shell-menu-modal hidden role="dialog" aria-modal="true" aria-labelledby="mobile-shell-menu-title">
         <div class="mobile-shell-menu-surface">
           <div class="mobile-shell-menu-header">

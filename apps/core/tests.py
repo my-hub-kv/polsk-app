@@ -71,7 +71,7 @@ class AuthenticationShellTests(TestCase):
         more_response = self.client.get(reverse("core:more"))
         self.assertEqual(
             [item["key"] for item in more_response.context["more_items"]],
-            ["directory", "notifications"],
+            ["activities", "directory", "notifications"],
         )
 
     def test_agenda_has_a_real_empty_state(self) -> None:
@@ -82,6 +82,14 @@ class AuthenticationShellTests(TestCase):
         self.assertContains(response, "Der er endnu ingen aktiviteter i programmet.")
         self.assertNotContains(response, "Denne del er under opbygning.")
 
+    def test_shell_includes_page_loading_feedback(self) -> None:
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, "page-loading-indicator")
+        self.assertContains(response, "core/js/shell.js")
+
     def test_normal_participant_is_redirected_from_unpublished_feature_pages(self) -> None:
         self.client.force_login(self.user)
 
@@ -90,7 +98,6 @@ class AuthenticationShellTests(TestCase):
             "messages",
             "food",
             "food_and_shopping",
-            "activities",
             "profile",
             "shopping",
             "history",

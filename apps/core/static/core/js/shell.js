@@ -34,8 +34,13 @@
     if (event.defaultPrevented || event.button !== 0) return false;
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
     if (link.target && link.target !== "_self") return false;
+    if (link.hasAttribute("download")) return false;
     const destination = new URL(link.href, window.location.href);
-    return destination.origin === window.location.origin && destination.pathname !== window.location.pathname;
+    return destination.origin === window.location.origin && destination.href !== window.location.href;
+  }
+
+  function startPageLoading() {
+    document.documentElement.dataset.pageLoading = "true";
   }
 
   function markNavigationPending(link) {
@@ -84,7 +89,27 @@
     const navigationLink = event.target.closest(navigationSelector);
     if (navigationLink && isPlainNavigationClick(event, navigationLink)) {
       markNavigationPending(navigationLink);
+      startPageLoading();
+      return;
     }
+
+    const pageLink = event.target.closest("a[href]");
+    if (pageLink && isPlainNavigationClick(event, pageLink)) {
+      startPageLoading();
+    }
+  });
+
+  document.addEventListener("submit", (event) => {
+    const form = event.target.closest("form[data-submit-feedback]");
+    if (!form || event.defaultPrevented || form.dataset.submitting === "true") return;
+    const submitButton = form.querySelector("button[type='submit']");
+    if (!submitButton) return;
+    form.dataset.submitting = "true";
+    submitButton.disabled = true;
+    submitButton.dataset.loading = "true";
+    submitButton.textContent = form.dataset.submittingLabel || "Gemmer…";
+    const status = form.querySelector("[data-submission-status]");
+    if (status) status.hidden = false;
   });
 
   document.addEventListener("keydown", (event) => {
@@ -93,5 +118,8 @@
     }
   });
 
-  window.addEventListener("pageshow", clearPendingNavigation);
+  window.addEventListener("pageshow", () => {
+    clearPendingNavigation();
+    delete document.documentElement.dataset.pageLoading;
+  });
 })();

@@ -1,0 +1,27 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+  <section class="more-page activity-page" aria-labelledby="activity-title">
+    <div class="page-heading">
+      <p class="eyebrow">Aktivitet</p>
+      <h1 id="activity-title">{{ activity.title }}</h1>
+      <p>{{ activity.activity_date|date:"l j. F Y" }} · {% if activity.is_time_approximate %}Cirka {% endif %}{{ activity.start_time|time:"H:i" }}{% if activity.end_time %}–{{ activity.end_time|time:"H:i" }}{% endif %}</p>
+    </div>
+    <div class="activity-description">{{ activity.description|linebreaks }}</div>
+    {% if form %}
+      <div class="activity-form-section">
+        <h2>Redigér aktivitet</h2>
+        <form method="post" class="activity-form" data-submit-feedback data-submitting-label="Gemmer ændringer…">{% csrf_token %}
+          {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
+          {% for field in form %}
+            <div class="activity-form-field{% if field.field.widget.input_type == 'checkbox' %} activity-form-checkbox{% endif %}">
+              {{ field.label_tag }}{{ field }}{% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+          {% endfor %}
+          <button class="operation-button" type="submit">Gem ændringer</button>
+          <p class="submission-status" data-submission-status hidden role="status">Ændringerne gemmes. Vent venligst.</p>
+        </form>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
