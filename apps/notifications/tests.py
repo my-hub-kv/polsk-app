@@ -264,6 +264,16 @@ class RequestTriggeredDeliveryTests(TestCase):
             idempotency_key=key,
         )
 
+    def _run_dispatcher_synchronously_in_test(self) -> None:
+        """Exercise worker logic without closing Django's main test connection.
+
+        Production always invokes this function in its own daemon thread, where
+        connection cleanup is thread-local. These unit tests deliberately call
+        the worker synchronously so they can make deterministic assertions.
+        """
+        with patch("apps.notifications.services.close_old_connections"):
+            services._run_request_triggered_delivery_dispatcher()
+
     @patch("apps.notifications.services.Thread")
     @patch("apps.notifications.services.send_notification")
     def test_committed_delivery_starts_background_dispatch_without_push_in_request(
@@ -407,7 +417,7 @@ class RequestTriggeredDeliveryTests(TestCase):
         for number, recipient in enumerate(recipients):
             self._enqueue(recipient=recipient, key=f"forty-five-{number}")
 
-        services._run_request_triggered_delivery_dispatcher()
+        self._run_dispatcher_synchronously_in_test()
 
         self.assertEqual(send_notification.call_count, 45)
         self.assertEqual(
@@ -425,7 +435,7 @@ class RequestTriggeredDeliveryTests(TestCase):
         for number, recipient in enumerate(recipients):
             self._enqueue(recipient=recipient, key=f"multi-batch-{number}")
 
-        services._run_request_triggered_delivery_dispatcher()
+        self._run_dispatcher_synchronously_in_test()
 
         self.assertEqual(send_notification.call_count, 51)
         self.assertEqual(
@@ -457,7 +467,7 @@ class RequestTriggeredDeliveryTests(TestCase):
             "apps.notifications.services.deliver_due_notifications",
             side_effect=request_again_then_return_empty,
         ) as deliver_due_notifications:
-            services._run_request_triggered_delivery_dispatcher()
+            self._run_dispatcher_synchronously_in_test()
 
         thread.assert_not_called()
         self.assertEqual(deliver_due_notifications.call_count, 2)
@@ -475,7 +485,7 @@ class RequestTriggeredDeliveryTests(TestCase):
         with services._request_dispatch_state_lock:
             services._request_dispatch_running = True
 
-        services._run_request_triggered_delivery_dispatcher()
+        self._run_dispatcher_synchronously_in_test()
 
         logger.exception.assert_called_once_with(
             "request_triggered_notification_dispatcher_failed"
