@@ -297,6 +297,25 @@ class ClientErrorTests(TestCase):
         logger.error.assert_called_once()
 
 
+class DatabaseKeepaliveTests(TestCase):
+    @patch.dict("os.environ", {"KEEPALIVE_SECRET": "keepalive-test-secret"})
+    def test_authenticated_head_checks_the_database_without_a_response_body(self) -> None:
+        response = self.client.head(
+            reverse("core:database_keepalive"),
+            HTTP_AUTHORIZATION="Bearer keepalive-test-secret",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"")
+        self.assertEqual(response["Cache-Control"], "no-store")
+
+    @patch.dict("os.environ", {"KEEPALIVE_SECRET": "keepalive-test-secret"})
+    def test_head_requires_the_keepalive_secret(self) -> None:
+        response = self.client.head(reverse("core:database_keepalive"))
+
+        self.assertEqual(response.status_code, 401)
+
+
 @override_settings(
     STARTIAPP_BRAND_NAME="test-brand",
     STARTIAPP_API_KEY="test-key",

@@ -688,8 +688,8 @@ def client_error(request: HttpRequest) -> HttpResponse:
 # CSRF protection therefore cannot validate its scheduled request; bearer authentication
 # remains mandatory for every request.
 @csrf_exempt
-def database_keepalive(request: HttpRequest) -> JsonResponse:
-    if request.method != "POST":
+def database_keepalive(request: HttpRequest) -> HttpResponse:
+    if request.method not in {"POST", "HEAD"}:
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
     expected = os.getenv("KEEPALIVE_SECRET")
@@ -705,6 +705,12 @@ def database_keepalive(request: HttpRequest) -> JsonResponse:
         cursor.execute("SELECT 1")
         cursor.fetchone()
 
-    response = JsonResponse({"status": "ok", "database": "connected"})
+    # Monitoring services commonly use HEAD requests. Perform the same database
+    # check, but correctly return no response body for that method.
+    response = (
+        HttpResponse(status=200)
+        if request.method == "HEAD"
+        else JsonResponse({"status": "ok", "database": "connected"})
+    )
     response["Cache-Control"] = "no-store"
     return response
