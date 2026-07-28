@@ -8,6 +8,8 @@ from . import views
 app_name = "core"
 
 urlpatterns = [
+    path("web/privatlivspolitik/", views.privacy_policy, name="privacy_policy"),
+    path("web/kontakt/", views.contact, name="contact"),
     path("", views.home, name="home"),
     path(
         "login/",

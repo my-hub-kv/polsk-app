@@ -1,0 +1,59 @@
+{% extends 'core/web_base.html' %}
+
+{% block title %}Privatlivspolitik | Polsk App{% endblock %}
+
+{% block content %}
+  <article class="public-page-card" aria-labelledby="page-title">
+    <p class="eyebrow">Polsk App</p>
+    <h1 id="page-title">Privatlivspolitik</h1>
+    <p class="public-page-updated">Senest opdateret 28. juli 2026</p>
+    <p class="public-page-lead">Her kan du læse, hvordan Polsk App behandler personoplysninger.</p>
+
+    <h2>Dataansvarlig og kontakt</h2>
+    <p>Polsk drives af Lars Olafsson, som er dataansvarlig for Polsk App.</p>
+    <p>Du kan kontakte os på <a href="mailto:larsolafsson@gmail.com">larsolafsson@gmail.com</a>.</p>
+
+    <h2>Oplysninger vi behandler</h2>
+    <p>Afhængigt af hvordan du bruger Polsk App, kan vi behandle:</p>
+    <ul>
+      <li>kontooplysninger som brugernavn, valgfri e-mailadresse og sikkert gemt adgangskode;</li>
+      <li>deltageroplysninger som navn, aldersgruppe, husstand, deltagelse og roller i eventet;</li>
+      <li>eventoplysninger som aktiviteter, tidspunkter, beskrivelser og notifikationer;</li>
+      <li>begrænsede tekniske oplysninger, der er nødvendige for sikker drift og fejlfinding; og</li>
+      <li>oplysninger, der er nødvendige for frivillige pushnotifikationer eller biometrisk login.</li>
+    </ul>
+    <p>Vi gemmer ikke fødselsdatoer eller fødselsår. Aldersgrupper bruges, når det er relevant for eventets planlægning.</p>
+
+    <h2>Hvorfor vi behandler oplysningerne</h2>
+    <p>Vi bruger oplysningerne for at give adgang til appen, planlægge og koordinere eventet, vise relevante oplysninger til deltagere, sende valgte notifikationer, beskytte appen mod misbrug og løse tekniske fejl.</p>
+    <p>Behandlingen er nødvendig for at levere og administrere appen og eventet, for vores legitime interesse i sikker og stabil drift eller, hvor det kræves, på grundlag af dit samtykke.</p>
+
+    <h2>Pushnotifikationer og biometrisk login</h2>
+    <p>Pushnotifikationer og biometrisk login er frivillige funktioner. Du kan ændre push-tilladelsen i enhedens indstillinger.</p>
+    <p>Ved biometrisk login behandles Face ID, Touch ID eller fingeraftryk af enhedens operativsystem. Polsk App modtager ikke dine biometriske skabeloner. Loginoplysninger kan, hvis du vælger funktionen, være beskyttet i enhedens sikre lager og frigives efter enhedens biometriske godkendelse.</p>
+
+    <h2>Deling og leverandører</h2>
+    <p>Vi sælger ikke personoplysninger og bruger dem ikke til annoncering eller adfærdsbaseret markedsføring.</p>
+    <p>Vi bruger leverandører til drift af hosting, database og native app-funktioner. Starti.app leverer de valgfrie native funktioner for pushnotifikationer og biometrisk login. Ved pushnotifikationer kan den underliggende pushinfrastruktur, herunder Firebase Cloud Messaging, behandle tekniske enhedsoplysninger og notifikationsindhold for at levere beskeden.</p>
+    <p>Vi deler kun oplysninger med andre deltagere, når det er nødvendigt for eventets funktioner og i overensstemmelse med appens synlighedsindstillinger.</p>
+
+    <h2>Sikkerhed og tekniske oplysninger</h2>
+    <p>Vi bruger adgangskoder, sessionsbeskyttelse, krypterede forbindelser og adgangskontrol for at beskytte oplysningerne. Adgangskoder gemmes som sikre hashes, ikke i læsbar form.</p>
+    <p>For at fejlfinde kan appen behandle begrænsede tekniske fejlrapporter, for eksempel en teknisk fejlbesked, den relevante side og et platformanmodnings-id. Vi gemmer ikke adgangskoder, tokens, formularindhold eller private beskeder i disse fejlrapporter.</p>
+
+    <h2>Opbevaring og sletning</h2>
+    <p>Vi opbevarer oplysninger, så længe de er nødvendige for at drive appen og eventet. Tekniske logoplysninger opbevares kun i den periode, der er nødvendig for sikkerhed og fejlfinding.</p>
+    <p>Når en konto slettes, fjerner eller anonymiserer vi kontooplysninger, kontaktoplysninger, adgangsoplysninger, indstillinger og andre personlige oplysninger, medmindre vi har et lovligt behov for at beholde dem. Delte eventoplysninger kan i begrænset omfang bevares for at fastholde eventets historik, men uden unødvendige personoplysninger.</p>
+
+    <h2>Dine rettigheder</h2>
+    <p>Du kan bede om indsigt, rettelse, sletning, begrænsning af behandling eller gøre indsigelse. Du kan også trække et samtykke tilbage, når behandlingen er baseret på samtykke.</p>
+    <p>For at udøve dine rettigheder eller anmode om sletning af din konto, se <a href="{% url 'core:contact' %}#slet-konto">kontakt og support</a>. Vi behandler anmodningen inden for syv dage og kan bede om oplysninger, der er nødvendige for at bekræfte din identitet.</p>
+    <p>Du kan klage til <a href="https://www.datatilsynet.dk/" rel="noopener noreferrer">Datatilsynet</a>, hvis du mener, at dine personoplysninger behandles i strid med reglerne.</p>
+
+    <h2>Børn og unge</h2>
+    <p>Polsk App kan indeholde deltageroplysninger om børn og unge i forbindelse med eventet. Den voksne, der opretter eller administrerer en mindreårig deltager, skal have ret til at gøre det.</p>
+
+    <h2>Ændringer</h2>
+    <p>Vi kan opdatere denne privatlivspolitik, når appen eller vores behandling af oplysninger ændres. Den nyeste version er altid tilgængelig på denne side.</p>
+  </article>
+{% endblock %}

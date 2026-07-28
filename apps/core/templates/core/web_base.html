@@ -1,0 +1,25 @@
+{% load static %}
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f8fa">
+    <title>{% block title %}Polsk App{% endblock %}</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'core/branding/favicon-32x32.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'core/branding/apple-touch-icon-180.png' %}">
+    <script>
+      (() => { try { document.documentElement.dataset.theme = localStorage.getItem("polsk-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch (_) { document.documentElement.dataset.theme = "light"; } })();
+    </script>
+    <script src="{% static 'core/client-error-reporting.js' %}" defer></script>
+    <link rel="stylesheet" href="{% static 'core/dist/app.css' %}">
+  </head>
+  <body class="public-page">
+    <main class="public-page-shell">
+      <header class="public-page-header">
+        <a href="{% url 'core:login' %}"><img src="{% static 'core/branding/polsk-header-40.png' %}" width="40" height="40" alt=""><span>Polsk App</span></a>
+      </header>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

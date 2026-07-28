@@ -10,4 +10,8 @@
 {% endif %}
 {% if active_participant and active_participant.login_account_id != request.user.id %}<p class="account-menu-help">Du bruger {{ active_participant.display_name }}s profil.</p>{% endif %}
 <div class="account-menu-divider"></div>
+<a class="account-menu-button" href="{% url 'core:privacy_policy' %}">Privatlivspolitik</a>
+<a class="account-menu-button" href="{% url 'core:contact' %}">Kontakt og support</a>
+<a class="account-menu-button" href="{% url 'core:contact' %}#slet-konto">Anmod om sletning af konto</a>
+<div class="account-menu-divider"></div>
 <form method="post" action="{% url 'core:logout' %}">{% csrf_token %}<button class="account-menu-button" type="submit">Log ud</button></form>

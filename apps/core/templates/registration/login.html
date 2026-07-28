@@ -39,6 +39,10 @@
           <button id="login-button" type="submit">Log ind</button>
           <button class="account-menu-button" type="button" data-startiapp-biometric-login hidden>Log ind med biometri</button>
         </form>
+        <nav class="public-page-links" aria-label="Praktiske oplysninger">
+          <a href="{% url 'core:privacy_policy' %}">Privatlivspolitik</a>
+          <a href="{% url 'core:contact' %}">Kontakt og support</a>
+        </nav>
       </section>
     </main>
   </body>
