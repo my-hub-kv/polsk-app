@@ -1,0 +1,22 @@
+{% extends 'core/web_base.html' %}
+
+{% block title %}Kontakt og support | Polsk App{% endblock %}
+
+{% block content %}
+  <article class="public-page-card" aria-labelledby="page-title">
+    <p class="eyebrow">Polsk App</p>
+    <h1 id="page-title">Kontakt og support</h1>
+    <p class="public-page-lead">Har du brug for hjælp med Polsk App, kan du skrive til os på <a href="mailto:larsolafsson@gmail.com">larsolafsson@gmail.com</a>.</p>
+
+    <h2 id="slet-konto">Anmod om sletning af konto</h2>
+    <div class="public-page-callout">
+      <p>Du kan anmode om sletning af din Polsk App-konto ved at skrive til <a href="mailto:larsolafsson@gmail.com?subject=Anmodning%20om%20sletning%20af%20Polsk%20App-konto">larsolafsson@gmail.com</a>.</p>
+      <p>Skriv gerne dit brugernavn og den e-mailadresse, der er knyttet til kontoen, så vi kan finde den rigtige konto. Send aldrig din adgangskode.</p>
+    </div>
+    <p>Vi behandler din anmodning inden for syv dage. Når kontoen slettes, fjerner eller anonymiserer vi personlige oplysninger som beskrevet i <a href="{% url 'core:privacy_policy' %}">privatlivspolitikken</a>. Delte eventoplysninger kan i begrænset omfang bevares uden unødvendige personoplysninger for at fastholde eventets historik.</p>
+
+    <h2>Privatliv og andre spørgsmål</h2>
+    <p>Du kan bruge den samme e-mailadresse til spørgsmål om dine oplysninger, rettelser eller andre supporthenvendelser.</p>
+    <p>Læs også vores <a href="{% url 'core:privacy_policy' %}">privatlivspolitik</a>.</p>
+  </article>
+{% endblock %}

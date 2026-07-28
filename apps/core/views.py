@@ -284,6 +284,20 @@ def _placeholder_view(
     return view
 
 
+@ensure_csrf_cookie
+@require_GET
+def privacy_policy(request: HttpRequest) -> HttpResponse:
+    """Render the public privacy policy required by the mobile-store listings."""
+    return render(request, "core/privacy_policy.html")
+
+
+@ensure_csrf_cookie
+@require_GET
+def contact(request: HttpRequest) -> HttpResponse:
+    """Render public support and account-deletion request instructions."""
+    return render(request, "core/contact.html")
+
+
 @login_required
 @ensure_csrf_cookie
 @_released_feature("agenda")

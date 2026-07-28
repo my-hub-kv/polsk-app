@@ -161,6 +161,26 @@
   .login-form button { min-height: 2.9rem; margin-top: 1rem; border: 0; border-radius: 0.65rem; background: var(--app-primary); color: #fff; cursor: pointer; font-weight: 750; }
   :root[data-theme="dark"] .login-form button { color: #101828; }
   .form-error { margin: 1rem 0 0; border: 1px solid var(--app-danger); border-radius: 0.65rem; background: color-mix(in srgb, var(--app-danger) 12%, transparent); padding: 0.75rem; color: var(--app-text); }
+  .public-page { background: radial-gradient(circle at 15% 15%, color-mix(in srgb, var(--app-primary) 17%, transparent), transparent 25rem), var(--app-background); }
+  .public-page-shell { width: min(100% - 2rem, 48rem); margin: 0 auto; padding: 2rem 0 3rem; }
+  .public-page-header { display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1.5rem; font-size: 1.0625rem; font-weight: 750; }
+  .public-page-header img { border-radius: 0.75rem; box-shadow: 0 4px 10px rgb(0 0 0 / 0.16); }
+  .public-page-header a { text-decoration: none; }
+  .public-page-card { border: 1px solid var(--app-line); border-radius: 1.25rem; background: var(--app-surface); box-shadow: var(--app-shadow); padding: clamp(1.5rem, 5vw, 2.5rem); }
+  .public-page-card h1 { margin-bottom: 1rem; font-size: clamp(2rem, 7vw, 3rem); }
+  .public-page-card h2 { margin: 2rem 0 0.75rem; font-size: 1.3rem; }
+  .public-page-card h3 { margin: 1.5rem 0 0.5rem; font-size: 1.05rem; }
+  .public-page-card p, .public-page-card li { color: var(--app-text); }
+  .public-page-card p { margin: 0.75rem 0; }
+  .public-page-card ul { display: grid; gap: 0.45rem; padding-left: 1.25rem; }
+  .public-page-card a { color: var(--app-primary-strong); }
+  .public-page-lead, .public-page-updated { color: var(--app-muted) !important; }
+  .public-page-updated { font-size: 0.9rem; }
+  .public-page-callout { margin: 1.25rem 0; border-left: 4px solid var(--app-primary); border-radius: 0.5rem; background: var(--app-primary-soft); padding: 1rem; }
+  .public-page-callout > :first-child { margin-top: 0; }
+  .public-page-callout > :last-child { margin-bottom: 0; }
+  .public-page-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; color: var(--app-muted); font-size: 0.9rem; }
+  .public-page-links a { color: inherit; }
 }
 
 @media (min-width: 64rem) {
